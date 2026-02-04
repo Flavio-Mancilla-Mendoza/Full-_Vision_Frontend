@@ -1,0 +1,22 @@
+{
+  "name": "post-confirmation-lambda",
+  "version": "1.0.0",
+  "description": "Post confirmation Lambda trigger for Cognito",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "lambda",
+    "cognito",
+    "auth"
+  ],
+  "author": "Full Vision",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.700.0"
+  }
+}

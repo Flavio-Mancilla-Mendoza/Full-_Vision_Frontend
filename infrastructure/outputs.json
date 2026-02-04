@@ -1,0 +1,23 @@
+{
+  "FullVisionInfrastructureStack-dev": {
+    "ExportsOutputFnGetAttUserPool6BA7E5F2Arn686ACC00": "arn:aws:cognito-idp:sa-east-1:235473625827:userpool/sa-east-1_A4YLB61FR",
+    "ECSTaskRoleArn": "arn:aws:iam::235473625827:role/full-vision-ecs-task-role-dev",
+    "VPCId": "vpc-0934cd4da0e0461ca",
+    "ECSExecutionRoleArn": "arn:aws:iam::235473625827:role/full-vision-ecs-execution-role-dev",
+    "PreSignUpFunctionArn": "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-pre-signup-dev",
+    "UserPoolClientId": "4fg5p06k3hma0s80ok8kova9m9",
+    "PostConfirmationFunctionArn": "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-post-confirmation-dev",
+    "UserPoolId": "sa-east-1_A4YLB61FR",
+    "ImagesBucketName": "fullvisioninfrastructures-productimagesbucket03bda-dfbsfpswo25e",
+    "ECSLogGroupName": "/aws/ecs/full-vision-dev",
+    "DatabaseSecretArn": "arn:aws:secretsmanager:sa-east-1:235473625827:secret:full-vision-db-credentials-dev-JfXgW8",
+    "FrontendBucketName": "fullvisioninfrastructuresta-frontendbucketefe2e19c-k3evnrsnmqmv",
+    "DatabaseEndpoint": "full-vision-db-dev.crcaogs44hor.sa-east-1.rds.amazonaws.com"
+  },
+  "ApiGatewayStack-dev": {
+    "FullVisionAPIEndpoint8614D1AA": "https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com/dev/",
+    "ApiUrl": "https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com/dev/",
+    "SupabaseProxyFunctionArn": "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-supabase-proxy-dev",
+    "ApiId": "slrrvl1zs2"
+  }
+}

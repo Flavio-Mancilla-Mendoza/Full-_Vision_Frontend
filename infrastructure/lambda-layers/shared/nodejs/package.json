@@ -1,0 +1,7 @@
+{
+  "name": "@full-vision/lambda-layer-shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Minimal placeholder layer to satisfy CDK asset requirement",
+  "dependencies": {}
+}

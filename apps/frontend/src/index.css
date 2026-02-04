@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Full Vision brand colors (derived from logo) */
+    --background: 0 0% 100%; /* white */
+    --foreground: 205 76% 12%; /* dark navy for primary text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 205 76% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 205 76% 12%;
+
+    /* Primary = Full Vision dark blue */
+    --primary: 205 86% 18%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary = lighter teal/blue accents (made lighter per request) */
+    --secondary: 174 60% 90%;
+    --secondary-foreground: 205 76% 12%;
+
+    --muted: 210 18% 95%;
+    --muted-foreground: 205 15% 45%;
+
+    /* Accent = Full Vision teal/turquoise */
+    --accent: 174 72% 44%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 205 20% 90%;
+    --input: 205 20% 90%;
+    --ring: 174 72% 44%;
+
+    --radius: 0.75rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(205 86% 18%), hsl(174 72% 44%));
+    --gradient-hero: linear-gradient(180deg, hsl(205 86% 18% / 0.8), hsl(174 72% 44% / 0.9));
+    --shadow-elegant: 0 10px 40px -12px hsl(205 86% 18% / 0.25);
+    --shadow-card: 0 4px 20px -4px hsl(205 86% 18% / 0.12);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Dark mode: invert emphasis, background dark navy, accents teal */
+    --background: 205 86% 12%; /* dark navy */
+    --foreground: 0 0% 98%;
+
+    --card: 205 86% 14%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 205 86% 14%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 174 72% 44%; /* teal as primary in dark mode */
+    --primary-foreground: 205 76% 12%;
+
+    --secondary: 205 30% 22%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 205 30% 22%;
+    --muted-foreground: 205 15% 65%;
+
+    --accent: 174 72% 44%;
+    --accent-foreground: 205 76% 12%;
+
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 205 20% 20%;
+    --input: 205 20% 20%;
+    --ring: 174 72% 44%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+
+  .hover-glow {
+    @apply transition-all duration-300 hover:shadow-[0_0_20px_hsl(var(--accent)/0.3)];
+  }
+
+  /* Toast específico para carrito */
+  .cart-toast-container {
+    min-width: 350px;
+    max-width: 400px;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Animación shimmer para loading de imágenes */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+  }
+}

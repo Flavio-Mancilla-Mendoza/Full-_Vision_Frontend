@@ -1,0 +1,24 @@
+{
+  "version": "1",
+  "triggerSource": "PreSignUp_SignUp",
+  "region": "sa-east-1",
+  "userPoolId": "sa-east-1_EXAMPLE",
+  "userName": "testuser@example.com",
+  "callerContext": {
+    "awsSdkVersion": "aws-sdk-unknown-unknown",
+    "clientId": "EXAMPLE_CLIENT_ID"
+  },
+  "request": {
+    "userAttributes": {
+      "email": "testuser@example.com",
+      "given_name": "John",
+      "family_name": "Doe"
+    },
+    "validationData": null
+  },
+  "response": {
+    "autoConfirmUser": false,
+    "autoVerifyEmail": false,
+    "autoVerifyPhone": false
+  }
+}

@@ -1,0 +1,110 @@
+# ================================================================
+# CDK & Node.js
+# ================================================================
+node_modules/
+*.js
+*.d.ts
+*.map
+
+# CDK output
+cdk.out/
+.cdk.staging/
+cdk-outputs.json
+
+# ================================================================
+# Environment & Secrets
+# ================================================================
+.env
+.env.*
+!.env.example
+
+# AWS Credentials
+.aws/
+credentials
+
+# ================================================================
+# Logs & Debugging
+# ================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ================================================================
+# OS & IDE
+# ================================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux
+*~
+
+# VSCode
+.vscode/
+!.vscode/extensions.json
+
+# JetBrains
+.idea/
+
+# ================================================================
+# Build & Temp
+# ================================================================
+*.tsbuildinfo
+.nyc_output
+lib/
+dist/
+build/
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# ================================================================
+# Package Managers
+# ================================================================
+yarn.lock
+package-lock.json
+.pnp.*
+.yarn/
+
+# ================================================================
+# CDK Specific
+# ================================================================
+cdk.context.json
+
+# ================================================================
+# Terraform (si se usa como alternativa)
+# ================================================================
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ================================================================
+# Scripts
+# ================================================================
+*.sh.tmp
+*.bat.tmp

@@ -1,0 +1,19 @@
+{
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*", "apps/frontend/src/*"],
+      "@full-vision/shared": ["packages/shared/src/index.ts"],
+      "@full-vision/shared/*": ["packages/shared/src/*"]
+    },
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "allowJs": true
+  }
+}

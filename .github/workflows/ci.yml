@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js (with pnpm cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+      - name: Build frontend
+        run: pnpm --filter ./apps/frontend build
+      - name: Build backend
+        run: pnpm --filter ./apps/backend build
+      - name: Run tests
+        run: pnpm exec vitest --run

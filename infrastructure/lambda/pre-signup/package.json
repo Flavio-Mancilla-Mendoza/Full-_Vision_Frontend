@@ -1,0 +1,19 @@
+{
+  "name": "pre-signup-lambda",
+  "version": "1.0.0",
+  "description": "Pre sign-up Lambda trigger for Cognito",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "keywords": [
+    "lambda",
+    "cognito",
+    "auth"
+  ],
+  "author": "Full Vision",
+  "license": "ISC",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

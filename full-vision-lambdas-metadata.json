@@ -1,0 +1,130 @@
+﻿[
+    {
+        "FunctionName":  "full-vision-public-api-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:25:48.279+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-public-api-dev",
+        "MemorySize":  512,
+        "Timeout":  15,
+        "Environment":  "{\r\n    \"ALLOWED_ORIGINS\":  \"*\"\r\n}",
+        "HasFunctionUrl":  true,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-post-confirmation-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:10:49.000+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-post-confirmation-dev",
+        "MemorySize":  512,
+        "Timeout":  30,
+        "Environment":  "{\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"LOG_LEVEL\":  \"debug\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-admin-user-management-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:26:06.656+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-admin-user-management-dev",
+        "MemorySize":  256,
+        "Timeout":  30,
+        "Environment":  "{\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"LOG_LEVEL\":  \"debug\",\r\n    \"USER_POOL_ID\":  \"sa-east-1_A4YLB61FR\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-supabase-products-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T04:35:54.000+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-supabase-products-dev",
+        "MemorySize":  512,
+        "Timeout":  30,
+        "Environment":  "{\r\n    \"SUPABASE_SERVICE_ROLE_KEY\":  \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4anJ5a3Njend3dGhiZ21tam1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTEyMTI0MSwiZXhwIjoyMDc2Njk3MjQxfQ.od_Wgl3FM4nZaf8364ghtRg4IjshnNOJLaMGud5YwP0\",\r\n    \"S3_REGION\":  \"sa-east-1\",\r\n    \"MERCADOPAGO_ACCESS_TOKEN\":  \"APP_USR-7368029333645399-122915-2f4b1599fec371ff6cf7f9a7467a6a6b-3099839108\",\r\n    \"IMAGES_BUCKET_NAME\":  \"fullvisioninfrastructures-productimagesbucket03bda-dfbsfpswo25e\",\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"API_GATEWAY_URL\":  \"https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com/dev\",\r\n    \"LOG_LEVEL\":  \"debug\",\r\n    \"SUPABASE_URL\":  \"https://txjryksczwwthbgmmjms.supabase.co\",\r\n    \"FRONTEND_URL\":  \"http://localhost:5173\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-supabase-public-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T04:35:54.000+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-supabase-public-dev",
+        "MemorySize":  512,
+        "Timeout":  30,
+        "Environment":  "{\r\n    \"SUPABASE_SERVICE_ROLE_KEY\":  \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4anJ5a3Njend3dGhiZ21tam1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTEyMTI0MSwiZXhwIjoyMDc2Njk3MjQxfQ.od_Wgl3FM4nZaf8364ghtRg4IjshnNOJLaMGud5YwP0\",\r\n    \"MERCADOPAGO_ACCESS_TOKEN\":  \"APP_USR-7368029333645399-122915-2f4b1599fec371ff6cf7f9a7467a6a6b-3099839108\",\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"API_GATEWAY_URL\":  \"https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com/dev\",\r\n    \"LOG_LEVEL\":  \"debug\",\r\n    \"SUPABASE_URL\":  \"https://txjryksczwwthbgmmjms.supabase.co\",\r\n    \"FRONTEND_URL\":  \"http://localhost:5173\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-pre-signup-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:10:49.000+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-pre-signup-dev",
+        "MemorySize":  256,
+        "Timeout":  10,
+        "Environment":  "{\r\n    \"ALLOWED_DOMAINS\":  \"gmail.com,hotmail.com,fullvision.com\",\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"LOG_LEVEL\":  \"debug\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-image-processor-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:26:06.243+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-image-processor-dev",
+        "MemorySize":  1024,
+        "Timeout":  60,
+        "Environment":  "{\r\n    \"OUTPUT_FORMAT\":  \"webp\",\r\n    \"THUMBNAIL_SIZE\":  \"200x200\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-supabase-uploads-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T04:35:54.000+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-supabase-uploads-dev",
+        "MemorySize":  512,
+        "Timeout":  30,
+        "Environment":  "{\r\n    \"SUPABASE_SERVICE_ROLE_KEY\":  \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4anJ5a3Njend3dGhiZ21tam1zIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTEyMTI0MSwiZXhwIjoyMDc2Njk3MjQxfQ.od_Wgl3FM4nZaf8364ghtRg4IjshnNOJLaMGud5YwP0\",\r\n    \"S3_REGION\":  \"sa-east-1\",\r\n    \"MERCADOPAGO_ACCESS_TOKEN\":  \"APP_USR-7368029333645399-122915-2f4b1599fec371ff6cf7f9a7467a6a6b-3099839108\",\r\n    \"IMAGES_BUCKET_NAME\":  \"fullvisioninfrastructures-productimagesbucket03bda-dfbsfpswo25e\",\r\n    \"NODE_ENV\":  \"dev\",\r\n    \"API_GATEWAY_URL\":  \"https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com/dev\",\r\n    \"LOG_LEVEL\":  \"debug\",\r\n    \"SUPABASE_URL\":  \"https://txjryksczwwthbgmmjms.supabase.co\",\r\n    \"FRONTEND_URL\":  \"http://localhost:5173\"\r\n}",
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    },
+    {
+        "FunctionName":  "full-vision-arm-example-dev",
+        "Runtime":  "nodejs20.x",
+        "Handler":  "index.handler",
+        "LastModified":  "2026-01-23T00:25:48.244+0000",
+        "Arn":  "arn:aws:lambda:sa-east-1:235473625827:function:full-vision-arm-example-dev",
+        "MemorySize":  128,
+        "Timeout":  5,
+        "Environment":  {
+
+                        },
+        "HasFunctionUrl":  false,
+        "RecentLogsSnippet":  {
+
+                              }
+    }
+]

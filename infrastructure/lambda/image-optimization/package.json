@@ -1,0 +1,20 @@
+{
+  "name": "image-optimization-lambda",
+  "version": "1.0.0",
+  "description": "Lambda@Edge function for CloudFront image optimization",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc && npm run bundle",
+    "bundle": "zip -r function.zip index.js node_modules",
+    "deploy": "aws lambda update-function-code --function-name ImageOptimization --zip-file fileb://function.zip"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1691.0",
+    "sharp": "^0.33.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20.10.6",
+    "typescript": "^5.3.3"
+  }
+}
