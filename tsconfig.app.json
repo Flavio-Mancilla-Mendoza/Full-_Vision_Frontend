@@ -1,5 +1,7 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
@@ -11,8 +13,8 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
-    "noEmit": true,
     "jsx": "react-jsx",
+    "noEmit": true,
 
     /* Linting */
     "strict": false,
@@ -21,12 +23,11 @@
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
 
-    /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@full-vision/shared": ["../../packages/shared/src/index.ts"],
-      "@full-vision/shared/*": ["../../packages/shared/src/*"]
+      "@full-vision/shared": ["./shared/src/index.ts"],
+      "@full-vision/shared/*": ["./shared/src/*"]
     }
   },
   "include": ["src"]

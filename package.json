@@ -1,20 +1,15 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "full-vision-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "scripts": {
-    "dev": "pnpm --filter ./apps/frontend dev",
-    "dev:frontend": "pnpm --filter ./apps/frontend dev",
-    "build": "pnpm --filter ./apps/frontend build",
-    "build:dev": "pnpm --filter ./apps/frontend build --mode development",
-    "build:analyze": "pnpm --filter ./apps/frontend build --mode production && npx vite-bundle-analyzer dist",
+    "dev": "vite",
+    "build": "vite build",
+    "build:dev": "vite build --mode development",
+    "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist",
     "analyze-deps": "node ./scripts/analyze-bundle.js",
-    "preview": "pnpm --filter ./apps/frontend preview",
+    "preview": "vite preview",
     "lint": "eslint .",
     "generate-favicons": "node ./scripts/generate-favicons.js",
     "db:types": "npx supabase gen types typescript --project-id txjryksczwwthbgmmjms > src/types/database.ts",
