@@ -35,11 +35,19 @@
 
 ### Backend & Servicios
 
-- **Supabase** (PostgreSQL + storage)
+- **AWS Lambda** (handlers de negocio con filtrado server-side)
+- **Supabase** (PostgreSQL + storage + real-time)
 - **AWS Cognito** (autenticación y gestión de usuarios)
 - **AWS S3** (almacenamiento de imágenes)
 - **Row Level Security (RLS)** (seguridad en BD)
-- **Real-time subscriptions** (actualizaciones en vivo)
+- **PostgreSQL Indexes** (optimización de queries)
+
+### Arquitectura de Datos
+
+- **Filtrado Server-Side**: Todos los filtros de productos se ejecutan en el backend
+- **Paginación Server-Side**: 24 productos por página cargados bajo demanda
+- **Cache Inteligente**: React Query cachea cada combinación de filtros
+- **Queries Optimizadas**: Uso de índices PostgreSQL para búsquedas rápidas
 
 ### Herramientas
 

@@ -1,19 +1,10 @@
 /**
  * useProductsByGender - Hook con React Query para productos por género
- * Incluye manejo de errores, cache inteligente y retry logic
+ * ACTUALIZADO: Ahora maneja filtros, ordenamiento y paginación en el backend
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { getProductsByGender } from "@/services/productCategories";
-import type { ProductWithBrand } from "@/services/productCategories";
-import { IProduct } from "@/types/IProducts";
-
-export interface ProductsByGenderData {
-  products: ProductWithBrand[];
-  groupedByStyle: Record<string, ProductWithBrand[]>;
-  availableStyles: string[];
-  availableMaterials: string[];
-}
+import { getProductsByGender, type ProductFilters, type ProductsResponse } from "@/services/productCategories";
 
 interface UseProductsByGenderOptions {
   enabled?: boolean;
@@ -22,25 +13,24 @@ interface UseProductsByGenderOptions {
 }
 
 /**
- * Hook para obtener productos filtrados por género
- * @param gender - Género para filtrar (hombre, mujer, niño)
+ * Hook para obtener productos filtrados por género con filtros del backend
+ * @param filters - Filtros de productos (género, marcas, precio, etc.)
  * @param options - Opciones de configuración de la query
- * @returns Query result con productos y estados
+ * @returns Query result con productos paginados y estados
  */
-export function useProductsByGender(gender: string, options: UseProductsByGenderOptions = {}) {
-  const { enabled = true, staleTime = 1000 * 60 * 5, retry = 2 } = options;
+export function useProductsByGender(filters: ProductFilters, options: UseProductsByGenderOptions = {}) {
+  const { enabled = true, staleTime = 1000 * 60 * 2, retry = 2 } = options;
 
-  return useQuery<IProduct[]>({
-    queryKey: ["products", "gender", gender],
+  return useQuery<ProductsResponse>({
+    queryKey: ["products", "filtered", filters],
     queryFn: async () => {
-      const products: IProduct[] = await getProductsByGender(gender);
-      return products;
+      return await getProductsByGender(filters);
     },
-    enabled: enabled && !!gender,
+    enabled: enabled && !!filters.gender,
     staleTime,
-    gcTime: 1000 * 60 * 20, // 20 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos (reducido porque ahora filtramos en backend)
     retry: (failureCount, error) => {
-      // No reintentar errores 404 (género no encontrado)
+      // No reintentar errores 404
       if (error instanceof Error && error.message.includes("404")) {
         return false;
       }

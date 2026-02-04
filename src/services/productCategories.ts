@@ -12,6 +12,75 @@ export type ProductWithBrand = DbProduct & {
   } | null;
 };
 
+// Interfaz para parámetros de filtrado
+export interface ProductFilters {
+  gender: string;
+  brands?: string[];
+  discount_min?: number;
+  price_min?: number;
+  price_max?: number;
+  attributes?: Record<string, string[]>; // { frame_size: ['M', 'L'], frame_material: ['metal'] }
+  sort_by?: 'featured' | 'price_asc' | 'price_desc' | 'discount';
+  page?: number;
+  limit?: number;
+}
+
+// Respuesta de productos con paginación
+export interface ProductsResponse {
+  products: IProduct[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasMore: boolean;
+}
+
+// Construir query params desde filtros
+function buildQueryParams(filters: ProductFilters): string {
+  const params = new URLSearchParams();
+
+  // Género (requerido)
+  params.append('gender', filters.gender);
+
+  // Marcas
+  if (filters.brands && filters.brands.length > 0) {
+    filters.brands.forEach(brand => params.append('brands[]', brand));
+  }
+
+  // Descuento mínimo
+  if (filters.discount_min !== undefined && filters.discount_min > 0) {
+    params.append('discount_min', filters.discount_min.toString());
+  }
+
+  // Rango de precio
+  if (filters.price_min !== undefined && filters.price_min > 0) {
+    params.append('price_min', filters.price_min.toString());
+  }
+  if (filters.price_max !== undefined && filters.price_max < 999999) {
+    params.append('price_max', filters.price_max.toString());
+  }
+
+  // Atributos dinámicos
+  if (filters.attributes) {
+    Object.entries(filters.attributes).forEach(([key, values]) => {
+      if (values.length > 0) {
+        values.forEach(value => params.append(`attributes[${key}][]`, value));
+      }
+    });
+  }
+
+  // Ordenamiento
+  if (filters.sort_by) {
+    params.append('sort_by', filters.sort_by);
+  }
+
+  // Paginación
+  params.append('page', (filters.page || 1).toString());
+  params.append('limit', (filters.limit || 24).toString());
+
+  return params.toString();
+}
+
 // Obtener filtros dinámicos basados en productos reales por género
 export const getDynamicFiltersForGender = async (gender: string) => {
   try {
@@ -58,34 +127,25 @@ export const getDynamicFiltersForGender = async (gender: string) => {
   }
 };
 
-// Obtener productos por género con subcategorías y marcas
-export const getProductsByGender = async (gender: string): Promise<IProduct[]> => {
+// Obtener productos por género con subcategorías y marcas (NUEVO: con filtros y paginación)
+export const getProductsByGender = async (filters: ProductFilters): Promise<ProductsResponse> => {
   try {
-    const response = await fetch(`${api.getApiUrl()}/public/products-by-gender/${gender}`);
+    const queryString = buildQueryParams(filters);
+    const response = await fetch(`${api.getApiUrl()}/public/products-by-gender?${queryString}`);
 
     if (!response.ok) {
-      const errorMsg = `Error HTTP ${response.status} al obtener productos para "${gender}"`;
+      const errorMsg = `Error HTTP ${response.status} al obtener productos`;
       console.error(errorMsg);
       throw new Error(errorMsg);
     }
 
-    const data: IProduct[] = await response.json();
+    const data: ProductsResponse = await response.json();
 
-    console.log(data, "ESTOS SON LOS DATOS EN EL CALL");
+    console.log(`✅ Productos obtenidos: ${data.products.length} de ${data.total} total (página ${data.page}/${data.totalPages})`);
 
-    // Validación de estructura de datos
-    if (!data || typeof data !== "object") {
-      console.error("Estructura de datos inválida en respuesta de productos");
-      throw new Error("Datos de productos inválidos");
-    }
-
-    console.log(`✅ Total productos encontrados para "${gender}":`, data.length);
-
-    // Asegurar estructura correcta con valores por defecto
     return data;
   } catch (error) {
     console.error("Error fetching products by gender:", error);
-    // Re-lanzar el error para que React Query lo maneje
     throw error instanceof Error ? error : new Error("Error desconocido al obtener productos");
   }
 };

@@ -41,10 +41,19 @@ This is an automated-first inventory of the main component groups in `src/compon
 - Layout.tsx
 
 ## Products (`src/components/products`)
-- ProductCard.tsx
-- ProductImage.tsx
-- FeaturedProducts.tsx
-- DynamicFilters.tsx
+- **ProductsPage.tsx** ⭐ - Componente genérico para todas las páginas de productos (filtros server-side)
+- ProductCard.tsx - Tarjeta individual de producto
+- ProductImage.tsx - Imagen optimizada de producto
+- FeaturedProducts.tsx - Productos destacados
+- DynamicFilters.tsx - Filtros dinámicos desde BD
+
+## Pages - Products (`src/pages`)
+- **HombresProducts.tsx** - Wrapper que usa ProductsPage (16 líneas)
+- **MujerProducts.tsx** - Wrapper que usa ProductsPage (16 líneas)
+- **KidsProducts.tsx** - Wrapper que usa ProductsPage (16 líneas)
+
+> **Nota de Refactorización**: Las páginas de productos fueron consolidadas en un componente genérico `ProductsPage.tsx`.
+> Reducción de ~1,477 líneas a ~501 líneas (66% menos código duplicado).
 
 ## Cart (`src/components/cart`)
 - CartSummary.tsx
