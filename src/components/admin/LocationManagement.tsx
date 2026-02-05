@@ -13,43 +13,16 @@ import { Plus, MapPin } from "lucide-react";
 import { createLocation, updateLocation, deleteLocation, checkLocationHasAppointments, getAllLocationsPaginated } from "@/services/admin";
 import type { Location } from "@/types/location";
 
-import { useLocationManagement } from "@/hooks/useLocationManagement";
+import { useLocations } from "@/hooks/useLocations";
 import { usePagination } from "@/hooks/usePagination";
-import { useLocationSubmit } from "@/hooks/useLocationSubmit";
 import { LocationForm } from "@/components/admin/location/LocationForm";
 import { useToast } from "@/components/ui/use-toast";
-import { useLocationDelete } from "@/hooks/useLocationDelete";
-import { useLocationToggleActive } from "@/hooks/useLocationToggleActive";
-import { useLocationEdit } from "@/hooks/useLocationEdit";
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 import { useConfirm } from "@/hooks/useConfirm";
 
 function LocationManagementInner() {
-  const {
-    locations,
-    setLocations,
-    loading,
-    setLoading,
-    searchTerm,
-    setSearchTerm,
-    isDialogOpen,
-    setIsDialogOpen,
-    editingLocation,
-    setEditingLocation,
-    locationsWithAppointments,
-    setLocationsWithAppointments,
-    formData,
-    setFormData,
-    resetForm,
-  } = useLocationManagement({
-    name: "",
-    address: "",
-    city: "",
-    phone: "",
-    is_active: true,
-    business_hours: "09:00-18:00",
-  });
   const { toast } = useToast();
+  const confirm = useConfirm();
 
   // Paginación de ubicaciones
   const {
@@ -60,7 +33,6 @@ function LocationManagementInner() {
     setPage,
     pageSize,
     setPageSize,
-    filters,
     setFilters,
     isLoading,
     refresh,
@@ -70,9 +42,35 @@ function LocationManagementInner() {
     initialPageSize: 10,
   });
 
-  useEffect(() => {
-    setLocations(pagedLocations);
-  }, [pagedLocations, setLocations]);
+  // Hook unificado de ubicaciones
+  const {
+    isDialogOpen,
+    setIsDialogOpen,
+    editingLocation,
+    locationsWithAppointments,
+    formData,
+    setFormData,
+    openCreateDialog,
+    closeDialog,
+    handleEdit,
+    handleSubmit,
+    handleToggleActive,
+    handleDelete,
+    checkAppointmentsForLocations,
+  } = useLocations({
+    toast,
+    confirm,
+    refresh: async () => {
+      await refresh();
+    },
+    createLocation,
+    updateLocation,
+    deleteLocation,
+    checkLocationHasAppointments,
+  });
+
+  // Estado de búsqueda local
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   // Sincronizar búsqueda con filtros del paginador
   useEffect(() => {
@@ -83,68 +81,13 @@ function LocationManagementInner() {
   // Revisar si las ubicaciones en la página actual tienen citas
   useEffect(() => {
     let mounted = true;
-    (async () => {
-      try {
-        const setWithAppts = new Set<string>();
-        await Promise.all(
-          pagedLocations.map(async (loc) => {
-            try {
-              const has = await checkLocationHasAppointments(loc.id);
-              if (has) setWithAppts.add(loc.id);
-            } catch (err) {
-              // ignore per-location errors
-            }
-          })
-        );
-        if (mounted) setLocationsWithAppointments(setWithAppts);
-      } catch (err) {
-        // noop
-      }
-    })();
+    checkAppointmentsForLocations(pagedLocations).then(() => {
+      if (!mounted) return;
+    });
     return () => {
       mounted = false;
     };
-  }, [pagedLocations, setLocationsWithAppointments]);
-
-  const confirm = useConfirm();
-
-  const handleSubmit = useLocationSubmit({
-    editingLocation,
-    formData,
-    setIsDialogOpen,
-    resetForm,
-    loadLocations: async () => {
-      await refresh();
-    },
-    toast,
-    updateLocation,
-    createLocation,
-  });
-  const handleEdit = useLocationEdit({ setEditingLocation, setFormData, setIsDialogOpen });
-
-  const handleToggleActive = useLocationToggleActive({
-    updateLocation,
-    toast,
-    loadLocations: async () => {
-      await refresh();
-    },
-  });
-
-  const handleDelete = useLocationDelete({
-    checkLocationHasAppointments,
-    updateLocation,
-    deleteLocation,
-    toast,
-    loadLocations: async () => {
-      await refresh();
-    },
-    confirm,
-  });
-
-  // Simple filter: server already returns filtered results, but keep local loading flag
-  useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading, setLoading]);
+  }, [pagedLocations, checkAppointmentsForLocations]);
 
   return (
     <Card>
@@ -155,19 +98,12 @@ function LocationManagementInner() {
         </CardTitle>
         <CardDescription>Administra las ubicaciones para exámenes oculares</CardDescription>
         <div className="flex gap-4">
-          <LocationHeader
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onCreate={() => {
-              setIsDialogOpen(true);
-              resetForm();
-            }}
-          />
+          <LocationHeader searchTerm={searchTerm} onSearchChange={setSearchTerm} onCreate={openCreateDialog} />
           <Dialog
             open={isDialogOpen}
             onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) resetForm();
+              if (!open) closeDialog();
+              else setIsDialogOpen(true);
             }}
           >
             <DialogTrigger asChild>
@@ -189,7 +125,7 @@ function LocationManagementInner() {
         </div>
       </CardHeader>
       <CardContent>
-        {loading ? (
+        {isLoading ? (
           <div className="text-center py-8">Cargando ubicaciones...</div>
         ) : (
           <LocationTable

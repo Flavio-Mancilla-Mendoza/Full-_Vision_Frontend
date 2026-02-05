@@ -1,4 +1,15 @@
+/**
+ * ⚠️ ARCHIVO DE TIPOS DE BASE DE DATOS
+ * 
+ * Tipos generados desde el esquema de Supabase
+ * Para regenerar: npm run db:types
+ * 
+ * @see docs/DATABASE_TYPES_GUIDE.md para guía de uso
+ */
+
 // src/types/database.ts - Tipos de base de datos generados desde Supabase
+
+/** Tipo para datos JSON en la base de datos */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
@@ -475,6 +486,7 @@ export interface Database {
           city: string | null;
           phone: string | null;
           email: string | null;
+          business_hours: string | null;
           is_active: boolean;
           created_at: string;
           updated_at: string;
@@ -486,6 +498,7 @@ export interface Database {
           city?: string | null;
           phone?: string | null;
           email?: string | null;
+          business_hours?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -497,6 +510,7 @@ export interface Database {
           city?: string | null;
           phone?: string | null;
           email?: string | null;
+          business_hours?: string | null;
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
@@ -798,16 +812,98 @@ export interface Database {
       };
     };
     Views: {
+      /** Vistas SQL definidas en la base de datos */
       [_ in never]: never;
     };
     Functions: {
+      /** Funciones SQL/PL-PGSQL disponibles */
       [_ in never]: never;
     };
     Enums: {
+      /** Enums de PostgreSQL - TODO: Migrar status a enums nativos */
       [_ in never]: never;
     };
     CompositeTypes: {
+      /** Tipos compuestos de PostgreSQL */
       [_ in never]: never;
     };
   };
 }
+
+// ============================================
+// TIPOS DERIVADOS Y HELPERS
+// ============================================
+
+/**
+ * Estados de orden disponibles
+ * TODO: Migrar a enum de PostgreSQL
+ */
+export type OrderStatus = 
+  | "pending" 
+  | "confirmed" 
+  | "processing" 
+  | "shipped" 
+  | "delivered" 
+  | "cancelled" 
+  | "ready_for_pickup";
+
+/**
+ * Estados de cita disponibles
+ * TODO: Migrar a enum de PostgreSQL
+ */
+export type AppointmentStatus = 
+  | "scheduled" 
+  | "confirmed" 
+  | "in_progress" 
+  | "completed" 
+  | "cancelled";
+
+/**
+ * Roles de usuario disponibles
+ * TODO: Migrar a enum de PostgreSQL
+ */
+export type UserRole = "admin" | "customer";
+
+/**
+ * Estructura de datos de prescripción médica
+ * Usado en prescription_details (campos JSON)
+ */
+export interface PrescriptionData {
+  // Ojo derecho
+  od_sphere?: number;
+  od_cylinder?: number;
+  od_axis?: number;
+  od_add?: number;
+  
+  // Ojo izquierdo
+  os_sphere?: number;
+  os_cylinder?: number;
+  os_axis?: number;
+  os_add?: number;
+  
+  // Distancia pupilar
+  pd?: number;
+  pd_far?: number;
+  pd_near?: number;
+  
+  // Información adicional
+  notes?: string;
+  prescription_date?: string;
+  expiry_date?: string;
+}
+
+/**
+ * Helper para campos de timestamp comunes
+ */
+export type TimestampFields = {
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Helper para soft delete
+ */
+export type SoftDeleteFields = {
+  deleted_at: string | null;
+};
+

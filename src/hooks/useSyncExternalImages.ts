@@ -29,7 +29,17 @@ export function useSyncExternalImages({ existingImages, setImages, onImagesChang
     if (lastExistingImagesRef.current !== newImagesKey) {
       lastExistingImagesRef.current = newImagesKey;
       isUpdatingFromParentRef.current = true;
-      setImages(existingImages.map((img) => ({ ...img })));
+      // Convertir DbProductImage a UploadingImage manejando valores null
+      setImages(existingImages.map((img, index) => ({
+        id: img.id,
+        product_id: img.product_id,
+        url: img.url,
+        s3_key: img.s3_key ?? undefined,
+        alt_text: img.alt_text ?? undefined,
+        sort_order: img.sort_order ?? index,
+        is_primary: img.is_primary ?? false,
+        created_at: img.created_at,
+      })));
       setTimeout(() => {
         isUpdatingFromParentRef.current = false;
       }, 0);

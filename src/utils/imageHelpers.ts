@@ -2,8 +2,9 @@
 import type { UploadingImage } from "@/types/image";
 
 // Generic sortImages to preserve all properties of the image type
-export function sortImages<T extends { sort_order?: number }>(images: T[]): T[] {
-  return [...images].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+// Accepts sort_order as number, undefined, or null (from database types)
+export function sortImages<T extends { sort_order?: number | null }>(images: T[]): T[] {
+  return [...images].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 }
 
 export function revokeBlobUrl(url: string) {

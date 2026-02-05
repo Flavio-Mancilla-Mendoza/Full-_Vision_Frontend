@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { checkSKUExists, checkSlugExists } from "@/services/admin";
 import { saveProductImages } from "@/services/imageHelpers";
-import type { OpticalProduct, DbProductImage as ProductImage } from "@/types";
+import type { OpticalProduct, DbProductImage as ProductImage, DbProductInsert, DbProductUpdate } from "@/types";
 import type { ProductFormData } from "@/types/product-forms";
 import { generateSlug, generateSKU } from "@/lib/product-utils";
 
@@ -60,8 +60,8 @@ export function useProductForm(opts?: { onSaved?: () => void }) {
     }: {
       isEdit: boolean;
       editingId?: string;
-      createFn?: (data: Partial<OpticalProduct>) => Promise<OpticalProduct>;
-      updateFn?: (id: string, data: Partial<OpticalProduct>) => Promise<OpticalProduct>;
+      createFn?: (data: DbProductInsert) => Promise<OpticalProduct>;
+      updateFn?: (id: string, data: DbProductUpdate) => Promise<OpticalProduct>;
     }) => {
       // If SKU not provided, request server-generated SKU (ensures uniqueness)
       if (!formData.sku && formData.name) {
@@ -88,27 +88,35 @@ export function useProductForm(opts?: { onSaved?: () => void }) {
       const slugExists = await checkUniqueSlug(slug, editingId);
       if (slugExists) throw new Error("SLUG_EXISTS");
 
+      // Build product data with required fields
+      const productData = {
+        ...formData,
+        slug,
+        name: formData.name, // Ensure name is always present
+        base_price: formData.base_price,
+      };
+
       let productId: string;
       if (isEdit && editingId) {
-        if (updateFn) await updateFn(editingId, { ...formData, slug });
-        else await (await import("@/services/admin")).updateOpticalProduct(editingId, { ...formData, slug } as Partial<OpticalProduct>);
+        if (updateFn) await updateFn(editingId, productData as DbProductUpdate);
+        else await (await import("@/services/admin")).updateOpticalProduct(editingId, productData as DbProductUpdate);
         productId = editingId;
       } else {
         let created: OpticalProduct;
-        if (createFn) created = await createFn({ ...formData, slug });
-        else created = await (await import("@/services/admin")).createOpticalProduct({ ...formData, slug } as Partial<OpticalProduct>);
+        if (createFn) created = await createFn(productData as DbProductInsert);
+        else created = await (await import("@/services/admin")).createOpticalProduct(productData as DbProductInsert);
         productId = created.id;
       }
 
       // Save images
-      await saveProductImages(productId, productImages, pendingFiles, isEdit, (opts) => {
+      await saveProductImages(productId, productImages, pendingFiles, isEdit, () => {
         /* caller handles toast */
       });
 
       opts?.onSaved?.();
       return productId;
     },
-    [formData, generateSlugCb, checkUniqueSKU, checkUniqueSlug, productImages, pendingFiles, opts],
+    [formData, checkUniqueSKU, checkUniqueSlug, productImages, pendingFiles, opts],
   );
 
   return {

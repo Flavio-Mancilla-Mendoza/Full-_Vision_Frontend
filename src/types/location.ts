@@ -1,5 +1,16 @@
-// Formulario para crear/editar una ubicación (Location)
-// Se separa de la interfaz Location para evitar campos de solo lectura como id, created_at, updated_at
+// src/types/location.ts
+// Tipos para ubicaciones de exámenes oculares
+// Alineados con Database['public']['Tables']['eye_exam_locations']
+
+import { Database } from "./database";
+
+// Tipo derivado de la base de datos (fuente de verdad)
+export type Location = Database["public"]["Tables"]["eye_exam_locations"]["Row"];
+export type LocationInsert = Database["public"]["Tables"]["eye_exam_locations"]["Insert"];
+export type LocationUpdate = Database["public"]["Tables"]["eye_exam_locations"]["Update"];
+
+// Formulario para crear/editar una ubicación
+// Todos los campos son requeridos en el UI aunque algunos sean nullable en DB
 export interface LocationFormData {
   name: string;
   address: string;
@@ -9,16 +20,16 @@ export interface LocationFormData {
   business_hours: string;
 }
 
-// Interfaz completa de ubicación usada en la API / servicios
-export interface Location {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  phone?: string;
-  email?: string;
-  is_active: boolean;
-  business_hours?: string;
-  created_at: string;
-  updated_at: string;
+/**
+ * Convierte LocationFormData a LocationInsert para la base de datos
+ */
+export function toLocationInsert(form: LocationFormData): LocationInsert {
+  return {
+    name: form.name,
+    address: form.address || null,
+    city: form.city || null,
+    phone: form.phone || null,
+    is_active: form.is_active,
+    // business_hours no existe en la tabla, se podría agregar después
+  };
 }

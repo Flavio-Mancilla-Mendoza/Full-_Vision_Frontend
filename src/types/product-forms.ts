@@ -1,16 +1,44 @@
-import type { DbProductImage } from "./image";
+/**
+ * Tipos para formularios de productos
+ * Alineados con los tipos globales de la aplicación y el esquema de la base de datos
+ */
 
+import type { DbProduct, DbProductInsert, DbProductUpdate, DbProductImage } from "./index";
+
+// ============================================
+// TIPOS BASE PARA FORMULARIOS
+// ============================================
+
+/**
+ * Datos de formulario para crear/editar productos
+ * Basado en DbProduct pero adaptado para uso en formularios
+ */
 export interface ProductFormData {
+  // Información básica (requerida)
   name: string;
-  description: string;
   slug: string;
-  base_price: number;
-  discount_percentage: number;
-  is_active: boolean;
-  stock_quantity: number;
-  min_stock_level: number;
   sku: string;
+  base_price: number;
+  
+  // Información descriptiva
+  description?: string;
+  meta_title?: string;
+  meta_description?: string;
+  
+  // Precios y descuentos
+  sale_price?: number;
+  discount_percentage?: number;
+  
+  // Relaciones
+  category_id?: string;
   brand_id?: string;
+  
+  // Inventario
+  stock_quantity?: number;
+  min_stock_level?: number;
+  
+  // Atributos de producto (valores hardcoded para compatibilidad legacy)
+  // TODO: Migrar a sistema de atributos dinámicos (product_attributes)
   frame_material?: string;
   lens_type?: string;
   frame_style?: string;
@@ -18,21 +46,143 @@ export interface ProductFormData {
   lens_color?: string;
   frame_color?: string;
   gender?: string;
-  has_uv_protection: boolean;
-  has_blue_filter: boolean;
-  is_photochromic: boolean;
-  has_anti_reflective: boolean;
-  is_featured: boolean;
-  is_bestseller: boolean;
+  
+  // Medidas físicas (opcional)
+  bridge_width?: number;
+  temple_length?: number;
+  lens_width?: number;
+  
+  // Características booleanas
+  has_uv_protection?: boolean;
+  has_blue_filter?: boolean;
+  is_photochromic?: boolean;
+  has_anti_reflective?: boolean;
+  
+  // Estado y destacados
+  is_active?: boolean;
+  is_featured?: boolean;
+  is_bestseller?: boolean;
+  
+  // Imagen principal (URL temporal o existente)
   image_url?: string;
 }
 
-export type CreateProductPayload = Omit<ProductFormData, "image_url"> & {
-  // image uploads handled separately
-};
+// ============================================
+// TIPOS PARA OPERACIONES CRUD
+// ============================================
 
-export type UpdateProductPayload = Partial<CreateProductPayload> & { id?: string };
+/**
+ * Payload para crear un nuevo producto
+ * Omite campos auto-generados y manejados por el backend
+ */
+export interface CreateProductPayload extends Omit<
+  DbProductInsert,
+  "id" | "created_at" | "updated_at" | "deleted_at"
+> {
+  // Campos adicionales del formulario si son necesarios
+  image_url?: string;
+}
 
+/**
+ * Payload para actualizar un producto existente
+ * Todos los campos son opcionales excepto el ID
+ */
+export interface UpdateProductPayload extends Partial<
+  Omit<DbProductUpdate, "id" | "created_at" | "updated_at" | "deleted_at">
+> {
+  id: string; // Requerido para actualización
+}
+
+// ============================================
+// TIPOS PARA VALIDACIÓN
+// ============================================
+
+/**
+ * Campos requeridos para validación de formulario
+ */
+export type RequiredProductFields = Pick<
+  ProductFormData,
+  "name" | "slug" | "sku" | "base_price"
+>;
+
+/**
+ * Campos opcionales para validación de formulario
+ */
+export type OptionalProductFields = Omit<
+  ProductFormData,
+  keyof RequiredProductFields
+>;
+
+// ============================================
+// TIPOS PARA IMÁGENES DE PRODUCTOS
+// ============================================
+
+/**
+ * Re-exportar tipo de imagen de producto desde tipos globales
+ */
 export type ProductImage = DbProductImage;
 
-export default ProductFormData;
+/**
+ * Payload para subir imagen de producto
+ */
+export interface ProductImageUpload {
+  product_id: string;
+  file: File;
+  alt_text?: string;
+  is_primary?: boolean;
+  sort_order?: number;
+}
+
+/**
+ * Response de imagen subida
+ */
+export interface ProductImageUploadResponse {
+  id: string;
+  url: string;
+  s3_key: string;
+  alt_text: string | null;
+  is_primary: boolean;
+  sort_order: number;
+}
+
+// ============================================
+// TIPOS PARA ATRIBUTOS DINÁMICOS (FUTURO)
+// ============================================
+
+/**
+ * Estructura para atributos dinámicos del producto
+ * Para cuando se migre de campos hardcoded a sistema dinámico
+ */
+export interface ProductAttributeValue {
+  attribute_type_id: string;
+  attribute_value_id: string;
+  attribute_slug: string; // e.g., "frame_material", "lens_type"
+  value_slug: string; // e.g., "metal", "polarized"
+  display_name: string; // e.g., "Metal", "Polarizado"
+}
+
+/**
+ * Payload para asociar atributos dinámicos a un producto
+ */
+export interface ProductWithAttributes extends CreateProductPayload {
+  attributes?: ProductAttributeValue[];
+}
+
+// ============================================
+// HELPERS Y UTILIDADES DE TIPO
+// ============================================
+
+/**
+ * Convierte ProductFormData a DbProductInsert
+ */
+export type FormDataToInsert = (
+  formData: ProductFormData
+) => CreateProductPayload;
+
+/**
+ * Convierte ProductFormData a DbProductUpdate
+ */
+export type FormDataToUpdate = (
+  formData: Partial<ProductFormData>,
+  productId: string
+) => UpdateProductPayload;

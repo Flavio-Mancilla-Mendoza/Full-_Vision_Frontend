@@ -24,17 +24,7 @@ export function getApiUrl(): string {
 async function getAuthToken(): Promise<string | null> {
   try {
     const session = await fetchAuthSession();
-    const token = session.tokens?.idToken?.toString();
-
-    console.log("🔑 Auth Token Debug:", {
-      hasSession: !!session,
-      hasTokens: !!session.tokens,
-      hasIdToken: !!session.tokens?.idToken,
-      hasAccessToken: !!session.tokens?.accessToken,
-      tokenPreview: token ? token.substring(0, 50) + "..." : "No token",
-    });
-
-    return token || null;
+    return session.tokens?.idToken?.toString() || null;
   } catch (error) {
     console.error("Error getting auth token:", error);
     return null;
@@ -45,66 +35,39 @@ async function getAuthToken(): Promise<string | null> {
  * Hacer request a API Gateway
  */
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}, requireAuth: boolean = false): Promise<T> {
-  try {
-    const token = await getAuthToken();
+  const token = await getAuthToken();
 
-    // Si se requiere autenticación y no hay token, lanzar error
-    if (requireAuth && !token) {
-      throw new Error("Authentication required");
-    }
-
-    console.log("🌐 API Request:", {
-      endpoint,
-      url: `${API_URL}${endpoint}`,
-      method: options.method || "GET",
-      authenticated: !!token,
-    });
-
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...(options.headers as Record<string, string>),
-    };
-
-    // Solo agregar Authorization si hay token
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    console.log("📡 API Response:", {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("❌ API Error Response:", errorText);
-
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { error: response.statusText };
-      }
-
-      throw new Error(errorData.error || `HTTP ${response.status}: ${errorText}`);
-    }
-
-    // 204 No Content no tiene body
-    if (response.status === 204) {
-      return null as T;
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("💥 API Request error:", error);
-    throw error;
+  if (requireAuth && !token) {
+    throw new Error("Authentication required");
   }
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const errorData = (() => {
+      try { return JSON.parse(errorText); } catch { return { error: response.statusText }; }
+    })();
+    throw new Error(errorData.error || `HTTP ${response.status}: ${errorText}`);
+  }
+
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  return await response.json();
 }
 
 // ================================================================
@@ -161,17 +124,11 @@ export const productsApi = {
   list: async (): Promise<Product[]> => {
     return apiRequest<Product[]>("/products", {}, true);
   },
-  getAll: async (): Promise<Product[]> => {
-    return apiRequest<Product[]>("/products", {}, true);
-  },
 
   /**
    * Obtener un producto por ID (público - no requiere autenticación)
    */
   get: async (id: string): Promise<Product> => {
-    return apiRequest<Product>(`/public/products/${id}`, {}, false);
-  },
-  getById: async (id: string): Promise<Product> => {
     return apiRequest<Product>(`/public/products/${id}`, {}, false);
   },
 
@@ -247,17 +204,11 @@ export const ordersApi = {
   list: async (): Promise<Order[]> => {
     return apiRequest<Order[]>("/orders");
   },
-  getAll: async (): Promise<Order[]> => {
-    return apiRequest<Order[]>("/orders");
-  },
 
   /**
    * Obtener una orden por ID
    */
   get: async (id: string): Promise<Order> => {
-    return apiRequest<Order>(`/orders/${id}`);
-  },
-  getById: async (id: string): Promise<Order> => {
     return apiRequest<Order>(`/orders/${id}`);
   },
 
