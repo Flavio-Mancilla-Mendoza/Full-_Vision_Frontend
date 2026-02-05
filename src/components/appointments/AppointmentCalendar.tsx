@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { listAppointmentsAll } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { getAllLocations } from "@/services/admin";
 import { Calendar as CalendarIcon, MapPin, User, Clock, Filter } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -82,7 +82,7 @@ export default function AppointmentCalendar() {
     setError(null);
 
     try {
-      const data = await listAppointmentsAll();
+      const data = await appointmentsApi.listAll();
       setAppointments(data || []);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error al cargar las citas";

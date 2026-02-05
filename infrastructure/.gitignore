@@ -6,6 +6,10 @@ node_modules/
 *.d.ts
 *.map
 
+# But keep Lambda handler files
+!lambda/*/index.js
+!lambda/**/index.js
+
 # CDK output
 cdk.out/
 .cdk.staging/
@@ -67,7 +71,6 @@ Icon
 # ================================================================
 *.tsbuildinfo
 .nyc_output
-lib/
 dist/
 build/
 
@@ -75,9 +78,10 @@ build/
 coverage/
 *.lcov
 
-# ================================================================
-# Package Managers
-# ================================================================
+# Compiled JS from TypeScript (but keep lib/*.ts source files)
+lib/*.js
+lib/*.d.ts
+lib/*.js.map
 yarn.lock
 package-lock.json
 .pnp.*
@@ -108,3 +112,11 @@ terraform.rc
 # ================================================================
 *.sh.tmp
 *.bat.tmp
+
+# ================================================================
+# Temporary / Downloaded from AWS
+# ================================================================
+current-stack-template.json
+lambda/supabase-products/
+lambda/supabase-public/
+lambda/supabase-uploads/

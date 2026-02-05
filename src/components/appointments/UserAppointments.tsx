@@ -1,6 +1,6 @@
 // src/components/appointments/UserAppointments.tsx
 import { useEffect, useState } from "react";
-import { listUserAppointments, cancelAppointment } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,7 +75,7 @@ export default function UserAppointments() {
     try {
       setLoading(true);
       setError(null);
-      const data = await listUserAppointments();
+      const data = await appointmentsApi.listUser();
       setAppointments(data as unknown as Appointment[]);
     } catch (err) {
       console.error("Error loading appointments:", err);
@@ -92,7 +92,7 @@ export default function UserAppointments() {
   const handleCancelAppointment = async (appointmentId: string) => {
     try {
       setCancellingId(appointmentId);
-      await cancelAppointment(appointmentId);
+      await appointmentsApi.cancel(appointmentId);
 
       toast({
         title: "Cita cancelada",

@@ -1,6 +1,6 @@
 // src/components/appointments/CreateAppointmentForm.tsx
 import { useEffect, useState } from "react";
-import { listLocations, createAppointment } from "@/services/appointments";
+import { listLocations, appointmentsApi } from "@/services/appointments";
 import { validateAppointment } from "@/lib/appointment-validators";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -119,7 +119,7 @@ export default function CreateAppointmentForm() {
       const dt = new Date(y, m - 1, d, hh, mm, 0, 0); // local time
       const isoDateTime = dt.toISOString();
 
-      await createAppointment(formData.locationId, isoDateTime, formData.notes);
+      await appointmentsApi.create({ locationId: formData.locationId, iso: isoDateTime, notes: formData.notes });
 
       toast({
         title: "Cita solicitada exitosamente",

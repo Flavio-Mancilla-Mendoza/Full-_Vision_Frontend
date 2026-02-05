@@ -1,6 +1,6 @@
 // src/components/appointments/AdminAppointmentsList.tsx
 import { useEffect, useState, useCallback } from "react";
-import { listAppointmentsAll, confirmAppointment } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -228,7 +228,7 @@ export default function AdminAppointmentsList({ className, maxItems }: AdminAppo
     setError(null);
 
     try {
-      const data = await listAppointmentsAll();
+      const data = await appointmentsApi.listAll();
 
       if (!Array.isArray(data)) {
         throw new Error("Formato de datos inválido");
@@ -280,7 +280,7 @@ export default function AdminAppointmentsList({ className, maxItems }: AdminAppo
 
   const handleConfirmAppointment = async (id: string) => {
     try {
-      await confirmAppointment(id);
+      await appointmentsApi.confirm(id);
       toast({
         title: "Éxito",
         description: "Cita confirmada correctamente",

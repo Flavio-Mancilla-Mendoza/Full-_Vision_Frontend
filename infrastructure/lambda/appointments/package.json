@@ -1,0 +1,13 @@
+{
+  "name": "full-vision-appointments-lambda",
+  "version": "1.0.0",
+  "description": "Lambda handler for appointments and locations management",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}

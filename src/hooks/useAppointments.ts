@@ -1,6 +1,6 @@
 // src/hooks/useAppointments.ts
 import { useState, useEffect, useCallback } from "react";
-import { listUserAppointments } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { useUser } from "@/hooks/useAuthCognito";
 import type { UserAppointment } from "@/types/appointments";
 
@@ -22,7 +22,7 @@ export function useAppointments() {
     try {
       setLoading(true);
       setError(null);
-      const data = await listUserAppointments();
+      const data = await appointmentsApi.listUser();
       setAppointments(data || []);
     } catch (err) {
       console.error("Error loading appointments:", err);

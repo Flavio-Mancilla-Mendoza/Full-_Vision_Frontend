@@ -9,7 +9,7 @@ import { Calendar, Clock, MapPin, Phone, Mail, AlertCircle, CheckCircle2, XCircl
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { cancelAppointment } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -32,7 +32,7 @@ export default function MisCitas() {
   const handleCancelAppointment = async (appointmentId: string) => {
     try {
       setCancellingId(appointmentId);
-      await cancelAppointment(appointmentId);
+      await appointmentsApi.cancel(appointmentId);
       toast({
         title: "Cita cancelada",
         description: "Tu cita ha sido cancelada exitosamente.",

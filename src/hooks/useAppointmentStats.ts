@@ -1,6 +1,6 @@
 // src/hooks/useAppointmentStats.ts
 import { useState, useEffect, useCallback } from "react";
-import { listAppointmentsAll } from "@/services/appointments";
+import { appointmentsApi } from "@/services/appointments";
 import { CalendarAppointment } from "@/types";
 
 interface AppointmentStats {
@@ -165,7 +165,7 @@ export function useAppointmentStats() {
     setError(null);
 
     try {
-      const appointments = await listAppointmentsAll();
+      const appointments = await appointmentsApi.listAll();
       const calculatedStats = calculateStats(appointments || []);
       setStats(calculatedStats);
     } catch (error) {
