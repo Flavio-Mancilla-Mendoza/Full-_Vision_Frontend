@@ -1,4 +1,10 @@
+import { IProduct } from "@/types/IProducts";
+import { OpticalProduct } from "@/types/ICartProduct";
+
+// ==========================================
 // Utilities for product identifiers: slug and SKU generation
+// ==========================================
+
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
@@ -19,4 +25,50 @@ export function generateSKU(name: string, frameStyle?: string, frameSize?: strin
   return `${prefix}-${nameCode}-${styleCode}-${sizeCode}-${randomCode}`;
 }
 
-export default { generateSlug, generateSKU };
+// ==========================================
+// Utilities for product data transformations
+// ==========================================
+
+/**
+ * Formatea un precio a la moneda local (PEN)
+ * Función pura sin efectos secundarios
+ */
+export function formatPrice(price: number): string {
+  return new Intl.NumberFormat("es-PE", {
+    style: "currency",
+    currency: "PEN",
+  }).format(price);
+}
+
+/**
+ * Transforma un producto de la API a formato de carrito
+ * Mapeo de datos sin lógica de negocio
+ */
+export function transformProductForCart(product: IProduct): OpticalProduct {
+  return {
+    ...product,
+    brand: product.brand ? {
+      id: product.id,
+      name: product.brand.name,
+      slug: product.slug,
+      logo_url: "",
+      description: "",
+      is_active: true,
+      created_at: "",
+      updated_at: "",
+    } : undefined,
+    category: undefined,
+    product_images: [],
+  };
+}
+
+/**
+ * Calcula el descuento mínimo de una lista de descuentos seleccionados
+ * Función pura de cálculo matemático
+ */
+export function calculateMinDiscount(discounts: string[]): number | undefined {
+  if (discounts.length === 0) return undefined;
+  return Math.min(...discounts.map(d => parseInt(d)));
+}
+
+export default { generateSlug, generateSKU, formatPrice, transformProductForCart, calculateMinDiscount };
