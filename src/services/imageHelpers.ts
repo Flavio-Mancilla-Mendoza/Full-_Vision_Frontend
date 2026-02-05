@@ -31,10 +31,10 @@ export async function saveProductImages(
             id: "",
             product_id: productId,
             url: result.url || result.s3Key,
-            s3_key: result.s3Key,
-            alt_text: matchingImage?.alt_text || file.name,
-            sort_order: matchingImage?.sort_order || i,
-            is_primary: matchingImage?.is_primary || i === 0,
+            s3_key: result.s3Key ?? null,
+            alt_text: matchingImage?.alt_text ?? file.name,
+            sort_order: matchingImage?.sort_order ?? i,
+            is_primary: matchingImage?.is_primary ?? (i === 0),
             created_at: new Date().toISOString(),
           });
         } catch (err) {
@@ -60,18 +60,18 @@ export async function saveProductImages(
       if (image.id) {
         await updateProductImageRecord(image.id, {
           url: image.url,
-          s3_key: image.s3_key,
-          alt_text: image.alt_text,
-          sort_order: image.sort_order,
-          is_primary: image.is_primary,
+          s3_key: image.s3_key || undefined,
+          alt_text: image.alt_text || undefined,
+          sort_order: image.sort_order ?? undefined,
+          is_primary: image.is_primary ?? undefined,
         });
       } else {
         await createProductImageRecord(productId, {
           url: image.url,
-          s3_key: image.s3_key,
-          alt_text: image.alt_text,
-          sort_order: image.sort_order,
-          is_primary: image.is_primary,
+          s3_key: image.s3_key || undefined,
+          alt_text: image.alt_text || undefined,
+          sort_order: image.sort_order ?? 0,
+          is_primary: image.is_primary ?? false,
         });
       }
     }

@@ -31,7 +31,6 @@ if (-not (Test-Path $LambdaDir)) {
 }
 
 # 2. Verificar dependencias instaladas
-$PackageJson = Join-Path $LambdaDir "package.json"
 $NodeModules = Join-Path $LambdaDir "node_modules"
 
 if (-not (Test-Path $NodeModules)) {

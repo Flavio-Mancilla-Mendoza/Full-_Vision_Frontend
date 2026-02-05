@@ -61,7 +61,7 @@ async function getCartItemsSimple(userId: string): Promise<CartItemWithProductLo
       console.warn("Error fetching products:", productsError);
       return cartItems.map((cartItem) => ({
         ...cartItem,
-        product: undefined,
+        product: null,
         prescription_details: cartItem.prescription_details as PrescriptionDetails | null,
       })) as CartItemWithProductLocal[];
     }
@@ -105,7 +105,7 @@ export async function getCartItems(userId?: string): Promise<CartItemWithProduct
 
     return (data || []).map((item) => ({
       ...item,
-      product: item.product as unknown as OpticalProduct | undefined,
+      product: (item.product as unknown as OpticalProduct) ?? null,
     }));
   } catch (error) {
     console.error("❌ Error al obtener carrito:", error);
@@ -326,8 +326,8 @@ export async function checkProductStock(productId: string, requestedQuantity: nu
     throw new Error("Producto no disponible");
   }
 
-  if (data.stock_quantity < requestedQuantity) {
-    throw new Error(`Solo hay ${data.stock_quantity} unidades disponibles`);
+  if ((data.stock_quantity ?? 0) < requestedQuantity) {
+    throw new Error(`Solo hay ${data.stock_quantity ?? 0} unidades disponibles`);
   }
 
   return true;

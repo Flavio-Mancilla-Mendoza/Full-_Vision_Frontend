@@ -92,7 +92,7 @@ export const getDynamicAttributesForGender = async (gender: string): Promise<Dyn
           display_name: type.display_name,
           values:
             type.attribute_values
-              ?.filter((v) => attributeValueCounts.get(v.id) > 0) // Solo valores con productos
+              ?.filter((v) => (attributeValueCounts.get(v.id) ?? 0) > 0) // Solo valores con productos
               ?.map((value) => ({
                 value: value.value,
                 display_name: value.display_name,

@@ -27,7 +27,7 @@ export async function createUser(userData: CreateUserData) {
 
 export async function updateUser(userId: string, updates: UpdateUserData) {
   try {
-    return await admin.updateUser(userId, updates as any);
+    return await admin.updateUser(userId, updates);
   } catch (err) {
     console.error("User service: updateUser error", err);
     throw err;

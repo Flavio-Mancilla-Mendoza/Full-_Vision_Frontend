@@ -63,7 +63,7 @@ const HeroSimple = memo(() => {
                   className={`w-full h-full object-cover object-top transition-opacity duration-500 will-change-opacity ${
                     imageLoaded ? "opacity-100" : "opacity-0"
                   }`}
-                  fetchPriority="high"
+                  {...{ fetchpriority: "high" }}
                   decoding="async"
                   onLoad={() => setImageLoaded(true)}
                   style={{

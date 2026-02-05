@@ -96,7 +96,7 @@ export const ProductImage: React.FC<ProductImageProps> = ({
         alt={alt}
         className={`${className} transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0 absolute inset-0"}`}
         loading={loading}
-        fetchPriority={priority ? "high" : "auto"}
+        {...{ fetchpriority: priority ? "high" : "auto" }}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
       />

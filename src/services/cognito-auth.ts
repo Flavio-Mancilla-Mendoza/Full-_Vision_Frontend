@@ -31,7 +31,7 @@ export interface User {
   email: string;
   name?: string;
   emailVerified: boolean;
-  attributes?: Record<string, string>;
+  attributes?: Partial<Record<string, string>>;
 }
 
 export interface AuthSession {

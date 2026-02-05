@@ -95,8 +95,8 @@ export async function getSaleProducts(limit = 12): Promise<Product[]> {
 export async function checkStock(productId: string): Promise<{ available: boolean; quantity: number }> {
   const product = await productsApi.get(productId);
   return {
-    available: product.stock_quantity > 0,
-    quantity: product.stock_quantity,
+    available: (product.stock_quantity ?? 0) > 0,
+    quantity: product.stock_quantity ?? 0,
   };
 }
 

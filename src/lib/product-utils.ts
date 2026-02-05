@@ -1,5 +1,4 @@
-import { IProduct } from "@/types/IProducts";
-import { OpticalProduct } from "@/types/ICartProduct";
+import { OpticalProduct } from "@/types";
 
 // ==========================================
 // Utilities for product identifiers: slug and SKU generation
@@ -44,7 +43,7 @@ export function formatPrice(price: number): string {
  * Transforma un producto de la API a formato de carrito
  * Mapeo de datos sin lógica de negocio
  */
-export function transformProductForCart(product: IProduct): OpticalProduct {
+export function transformProductForCart(product: OpticalProduct): OpticalProduct {
   return {
     ...product,
     brand: product.brand ? {

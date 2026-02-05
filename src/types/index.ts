@@ -80,6 +80,13 @@ export interface OpticalProduct extends DbProduct {
   deleted_at?: string | null;
 }
 
+// Tipo para productos tal como vienen de Supabase con joins
+export interface ProductWithRelations extends DbProduct {
+  category: DbProductCategory | null;
+  brand: DbBrand | null;
+  product_images: DbProductImage[] | null;
+}
+
 // Marca y categoría (tipos de dominio reutilizables)
 export interface Brand {
   id: string;
@@ -161,3 +168,4 @@ export interface ExamResults {
 // Export para uso en componentes
 export * from "./database";
 export * from "./appointments";
+export * from "./attributes";
