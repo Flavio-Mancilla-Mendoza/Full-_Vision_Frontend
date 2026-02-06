@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { getCurrentUserId } from "@/services/cognito-auth";
 import { OpticalProduct, CartItemWithProduct, PrescriptionDetails, DbCartItem, DbCartItemInsert, DbCartItemUpdate } from "@/types";
+import { cartApi, USE_PROXY_API } from "@/services/api";
 
 export interface CartItem extends DbCartItem {
   prescription_details: PrescriptionDetails | null;
@@ -86,6 +87,18 @@ async function getCartItemsSimple(userId: string): Promise<CartItemWithProductLo
  * Obtener todos los items del carrito del usuario
  */
 export async function getCartItems(userId?: string): Promise<CartItemWithProductLocal[]> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      const items = await cartApi.list();
+      return items as CartItemWithProductLocal[];
+    } catch (error) {
+      console.error("❌ Error al obtener carrito desde API Gateway:", error);
+      return [];
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   if (!userId) {
     const cognitoUserId = await getCurrentUserId();
 
@@ -132,6 +145,23 @@ export async function addToCart(
   prescriptionDetails?: PrescriptionDetails,
   specialInstructions?: string
 ): Promise<CartItemWithProductLocal> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      const result = await cartApi.add({
+        product_id: productId,
+        quantity,
+        prescription_details: prescriptionDetails as Record<string, unknown> | undefined,
+        special_instructions: specialInstructions,
+      });
+      return result as CartItemWithProductLocal;
+    } catch (error) {
+      console.error("❌ Error al agregar al carrito desde API Gateway:", error);
+      throw error;
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   const userId = await getCurrentUserId();
   if (!userId) throw new Error("Usuario no autenticado");
 
@@ -203,6 +233,18 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
     throw new Error("La cantidad debe ser mayor a 0");
   }
 
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      const result = await cartApi.updateQuantity(cartItemId, quantity);
+      return result as CartItemWithProductLocal;
+    } catch (error) {
+      console.error("❌ Error al actualizar cantidad desde API Gateway:", error);
+      throw error;
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   const { data, error } = await supabase
     .from("cart_items")
     .update({
@@ -236,6 +278,18 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
  * Eliminar item del carrito
  */
 export async function removeFromCart(cartItemId: string): Promise<void> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      await cartApi.remove(cartItemId);
+      return;
+    } catch (error) {
+      console.error("❌ Error al eliminar del carrito desde API Gateway:", error);
+      throw error;
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   const { error } = await supabase.from("cart_items").delete().eq("id", cartItemId);
 
   if (error) {
@@ -248,6 +302,18 @@ export async function removeFromCart(cartItemId: string): Promise<void> {
  * Vaciar todo el carrito del usuario
  */
 export async function clearCart(userId?: string): Promise<void> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      await cartApi.clear();
+      return;
+    } catch (error) {
+      console.error("❌ Error al vaciar carrito desde API Gateway:", error);
+      throw error;
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   if (!userId) {
     const cognitoUserId = await getCurrentUserId();
     if (!cognitoUserId) throw new Error("Usuario no autenticado");
@@ -266,6 +332,26 @@ export async function clearCart(userId?: string): Promise<void> {
  * Obtener resumen del carrito con totales calculados
  */
 export async function getCartSummary(userId?: string): Promise<CartSummary> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      const summary = await cartApi.getSummary();
+      return summary as CartSummary;
+    } catch (error) {
+      console.error("❌ Error al obtener resumen desde API Gateway:", error);
+      // Retornar carrito vacío en caso de error
+      return {
+        items: [],
+        totalItems: 0,
+        subtotal: 0,
+        tax: 0,
+        shipping: 0,
+        total: 0,
+      };
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   const items = await getCartItems(userId);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -299,6 +385,17 @@ export async function getCartSummary(userId?: string): Promise<CartSummary> {
  * Obtener número de items en el carrito (para mostrar en navegación)
  */
 export async function getCartItemCount(): Promise<number> {
+  // Si está habilitado el proxy API, usar API Gateway
+  if (USE_PROXY_API) {
+    try {
+      return await cartApi.getCount();
+    } catch (error) {
+      console.error("❌ Error al obtener contador desde API Gateway:", error);
+      return 0;
+    }
+  }
+
+  // Fallback a Supabase directo (método legacy)
   const userId = await getCurrentUserId();
   if (!userId) return 0;
 

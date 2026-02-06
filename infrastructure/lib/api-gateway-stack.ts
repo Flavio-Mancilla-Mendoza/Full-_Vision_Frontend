@@ -10,7 +10,6 @@ export interface ApiGatewayStackProps extends cdk.StackProps {
   environment: string;
   userPool?: cognito.IUserPool;
   userPoolClient?: cognito.IUserPoolClient;
-  adminUserManagementFunctionArn?: string;
 }
 
 /**
@@ -28,6 +27,7 @@ export class ApiGatewayStack extends cdk.Stack {
   public readonly supabaseProductsFunction: lambda.Function;
   public readonly supabaseUploadsFunction: lambda.Function;
   public readonly appointmentsFunction: lambda.Function;
+  public readonly adminUserManagementFunction: lambda.Function;
 
   constructor(scope: Construct, id: string, props: ApiGatewayStackProps) {
     super(scope, id, props);
@@ -47,6 +47,25 @@ export class ApiGatewayStack extends cdk.Stack {
     // ================================================================
     const userPoolId = process.env.COGNITO_USER_POOL_ID || "sa-east-1_A4YLB61FR";
     const userPool = cognito.UserPool.fromUserPoolId(this, "ImportedUserPool", userPoolId);
+
+    // ================================================================
+    // Lambda: Admin User Management
+    // ================================================================
+    this.adminUserManagementFunction = new lambda.Function(this, "AdminUserManagementFunction", {
+      functionName: `full-vision-admin-users-${environment}`,
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "../lambda/admin-user-management")),
+      memorySize: 256,
+      timeout: cdk.Duration.seconds(15),
+      environment: {
+        NODE_ENV: environment,
+        USER_POOL_ID: userPoolId,
+        ALLOWED_ORIGINS: frontendUrl,
+      },
+      logRetention: logs.RetentionDays.ONE_WEEK,
+      description: "Admin user management via Cognito (list, create, disable users)",
+    });
 
     // ================================================================
     // Lambda: Supabase Public (Public endpoints)
@@ -144,7 +163,12 @@ export class ApiGatewayStack extends cdk.Stack {
         metricsEnabled: true,
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowOrigins: [
+          "http://localhost:8080",
+          "http://localhost:8081",
+          "http://localhost:5173",
+          "https://full-vision.vercel.app",
+        ],
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
           "Content-Type",
@@ -154,6 +178,29 @@ export class ApiGatewayStack extends cdk.Stack {
           "X-Amz-Security-Token",
         ],
         allowCredentials: true,
+      },
+    });
+
+    // ================================================================
+    // Gateway Responses (CORS headers on API Gateway-level errors)
+    // Sin esto, errores 401 del Cognito Authorizer no llevan headers
+    // CORS y el browser muestra "CORS error" en vez del 401 real.
+    // ================================================================
+    this.api.addGatewayResponse("Default4XX", {
+      type: apigateway.ResponseType.DEFAULT_4XX,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'",
+        "Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+      },
+    });
+
+    this.api.addGatewayResponse("Default5XX", {
+      type: apigateway.ResponseType.DEFAULT_5XX,
+      responseHeaders: {
+        "Access-Control-Allow-Origin": "'*'",
+        "Access-Control-Allow-Headers": "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'",
+        "Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
       },
     });
 
@@ -177,6 +224,7 @@ export class ApiGatewayStack extends cdk.Stack {
     const productsIntegration = new apigateway.LambdaIntegration(this.supabaseProductsFunction, { proxy: true });
     const uploadsIntegration = new apigateway.LambdaIntegration(this.supabaseUploadsFunction, { proxy: true });
     const appointmentsIntegration = new apigateway.LambdaIntegration(this.appointmentsFunction, { proxy: true });
+    const adminUsersIntegration = new apigateway.LambdaIntegration(this.adminUserManagementFunction, { proxy: true });
 
     // Helper for authorized methods
     const authOptions = {
@@ -245,6 +293,29 @@ export class ApiGatewayStack extends cdk.Stack {
     uploadUrl.addMethod("POST", uploadsIntegration, authOptions);
 
     // ================================================================
+    // CART ROUTES (/cart/*)
+    // ================================================================
+    // The cart endpoints are handled by the SupabaseProductsFunction router (cart handler)
+    const cartResource = this.api.root.addResource("cart");
+    // List and create
+    cartResource.addMethod("GET", productsIntegration, authOptions);
+    cartResource.addMethod("POST", productsIntegration, authOptions);
+    // Bulk delete (clear)
+    cartResource.addMethod("DELETE", productsIntegration, authOptions);
+
+    // /cart/{id} - update quantity or delete single item
+    const cartById = cartResource.addResource("{id}");
+    cartById.addMethod("PUT", productsIntegration, authOptions);
+    cartById.addMethod("DELETE", productsIntegration, authOptions);
+
+    // /cart/summary and /cart/count (aux endpoints)
+    const cartSummary = cartResource.addResource("summary");
+    cartSummary.addMethod("GET", productsIntegration, authOptions);
+
+    const cartCount = cartResource.addResource("count");
+    cartCount.addMethod("GET", productsIntegration, authOptions);
+
+    // ================================================================
     // ORDERS ROUTES (/orders/*)
     // ================================================================
     const ordersResource = this.api.root.addResource("orders");
@@ -307,6 +378,27 @@ export class ApiGatewayStack extends cdk.Stack {
     appointmentById.addMethod("PUT", appointmentsIntegration, authOptions);
 
     // ================================================================
+    // ADMIN USERS ROUTES (/admin/users/*) - NEW
+    // ================================================================
+    const adminResource = this.api.root.addResource("admin");
+    const adminUsersResource = adminResource.addResource("users");
+    adminUsersResource.addMethod("GET", adminUsersIntegration, authOptions);
+    adminUsersResource.addMethod("POST", adminUsersIntegration, authOptions);
+
+    // /admin/users/{userId}
+    const adminUserById = adminUsersResource.addResource("{userId}");
+    adminUserById.addMethod("GET", adminUsersIntegration, authOptions);
+    adminUserById.addMethod("DELETE", adminUsersIntegration, authOptions);
+
+    // /admin/users/{userId}/disable
+    const adminUserDisable = adminUserById.addResource("disable");
+    adminUserDisable.addMethod("PUT", adminUsersIntegration, authOptions);
+
+    // /admin/users/{userId}/enable
+    const adminUserEnable = adminUserById.addResource("enable");
+    adminUserEnable.addMethod("PUT", adminUsersIntegration, authOptions);
+
+    // ================================================================
     // Outputs
     // ================================================================
     new cdk.CfnOutput(this, "ApiUrl", {
@@ -343,6 +435,12 @@ export class ApiGatewayStack extends cdk.Stack {
       value: this.appointmentsFunction.functionArn,
       description: "Appointments Lambda ARN",
       exportName: `FullVision-${environment}-Appointments-ARN`,
+    });
+
+    new cdk.CfnOutput(this, "AdminUserManagementFunctionArn", {
+      value: this.adminUserManagementFunction.functionArn,
+      description: "Admin User Management Lambda ARN",
+      exportName: `FullVision-${environment}-APIGW-AdminUserMgmt-ARN`,
     });
   }
 }

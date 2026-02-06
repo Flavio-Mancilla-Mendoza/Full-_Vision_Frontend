@@ -332,6 +332,117 @@ export const brandsApi = {
 };
 
 // ================================================================
+// Cart API
+// ================================================================
+
+export interface CartItem {
+  id: string;
+  user_id: string;
+  product_id: string;
+  quantity: number;
+  prescription_details?: Record<string, unknown> | null;
+  special_instructions?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CartItemWithProduct extends CartItem {
+  product: Product | null;
+}
+
+export interface CartSummary {
+  items: CartItemWithProduct[];
+  totalItems: number;
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  total: number;
+}
+
+export const cartApi = {
+  /**
+   * Obtener todos los items del carrito del usuario
+   */
+  list: async (): Promise<CartItemWithProduct[]> => {
+    return apiRequest<CartItemWithProduct[]>("/cart", {}, true);
+  },
+
+  /**
+   * Obtener resumen del carrito con totales calculados
+   */
+  getSummary: async (): Promise<CartSummary> => {
+    return apiRequest<CartSummary>("/cart/summary", {}, true);
+  },
+
+  /**
+   * Obtener contador de items en el carrito
+   */
+  getCount: async (): Promise<number> => {
+    const response = await apiRequest<{ count: number }>("/cart/count", {}, true);
+    return response.count;
+  },
+
+  /**
+   * Agregar producto al carrito
+   */
+  add: async (data: {
+    product_id: string;
+    quantity: number;
+    prescription_details?: Record<string, unknown> | null;
+    special_instructions?: string | null;
+  }): Promise<CartItemWithProduct> => {
+    return apiRequest<CartItemWithProduct>(
+      "/cart",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      true,
+    );
+  },
+
+  /**
+   * Actualizar cantidad de un item del carrito
+   */
+  updateQuantity: async (cartItemId: string, quantity: number): Promise<CartItemWithProduct> => {
+    return apiRequest<CartItemWithProduct>(
+      `/cart/${cartItemId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ quantity }),
+      },
+      true,
+    );
+  },
+
+  /**
+   * Eliminar item del carrito
+   */
+  remove: async (cartItemId: string): Promise<void> => {
+    await apiRequest<void>(
+      `/cart/${cartItemId}`,
+      {
+        method: "DELETE",
+      },
+      true,
+    );
+  },
+
+  /**
+   * Vaciar todo el carrito
+   */
+  clear: async (): Promise<void> => {
+    await apiRequest<void>(
+      "/cart/all",
+      {
+        method: "DELETE",
+      },
+      true,
+    );
+  },
+};
+
+// ================================================================
 // Helper para verificar si el usuario está autenticado
 // ================================================================
 
@@ -349,6 +460,7 @@ export default {
   orders: ordersApi,
   profile: profileApi,
   brands: brandsApi,
+  cart: cartApi,
   checkAuth,
   getApiUrl,
 };

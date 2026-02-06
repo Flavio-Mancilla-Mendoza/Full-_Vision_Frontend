@@ -4,7 +4,6 @@ import * as cdk from "aws-cdk-lib";
 import * as dotenv from "dotenv";
 import * as path from "path";
 import { ApiGatewayStack } from "../lib/api-gateway-stack";
-import { LambdaFunctionsStack } from "../lib/lambda-functions-stack";
 
 // Cargar variables de entorno según el ambiente
 const environment = process.env.CDK_ENVIRONMENT || "dev";
@@ -45,7 +44,6 @@ const apiStack = new ApiGatewayStack(app, `ApiGatewayStack-${environment}`, {
   // Los imports de UserPool se harán dentro del stack
   userPool: undefined as any, // Será importado dentro del stack
   userPoolClient: undefined as any, // Será importado dentro del stack
-  adminUserManagementFunctionArn: undefined, // Opcional
   env: {
     account: process.env.AWS_ACCOUNT,
     region: process.env.AWS_REGION,

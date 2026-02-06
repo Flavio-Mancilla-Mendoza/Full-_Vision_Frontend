@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Pre sign-up Lambda trigger for Cognito",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "test": "node --test"
   },

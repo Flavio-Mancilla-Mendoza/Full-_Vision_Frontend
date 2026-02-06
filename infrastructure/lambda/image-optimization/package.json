@@ -2,7 +2,8 @@
   "name": "image-optimization-lambda",
   "version": "1.0.0",
   "description": "Lambda@Edge function for CloudFront image optimization",
-  "main": "index.ts",
+  "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc && npm run bundle",
     "bundle": "zip -r function.zip index.js node_modules",
