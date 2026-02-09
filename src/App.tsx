@@ -38,6 +38,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const HombresProducts = lazy(() => import("./pages/HombresProducts"));
 const MujerProducts = lazy(() => import("./pages/MujerProducts"));
 const KidsProducts = lazy(() => import("./pages/KidsProducts"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 
 // Páginas legales e informativas
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
@@ -95,6 +96,7 @@ const AppRoutes = () => {
           <Route path="/hombres" element={<HombresProducts />} />
           <Route path="/mujer" element={<MujerProducts />} />
           <Route path="/ninos" element={<KidsProducts />} />
+          <Route path="/producto/:slug" element={<ProductDetail />} />
 
           {/* Rutas de páginas legales */}
           <Route path="/terminos" element={<TermsOfService />} />

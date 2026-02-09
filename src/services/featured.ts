@@ -4,6 +4,7 @@ import api from "@/services/api";
 export interface FeaturedProduct {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   base_price: number;
   sale_price?: number;
@@ -30,6 +31,7 @@ export interface FeaturedProduct {
   // Categoría y marca
   category_name?: string;
   brand_name?: string;
+  brand?: { id: string; name: string; slug: string };
 }
 
 // Obtener productos destacados para mostrar en el home

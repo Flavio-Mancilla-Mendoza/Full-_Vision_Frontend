@@ -38,32 +38,15 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minD
         background: "linear-gradient(160deg, #f8fbff 0%, #eef6f9 30%, #f0f9f7 60%, #f8fbff 100%)",
       }}
     >
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.07]"
-          style={{ background: "radial-gradient(circle, hsl(174 72% 44%), transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.05]"
-          style={{ background: "radial-gradient(circle, hsl(205 86% 18%), transparent 70%)" }}
-        />
-      </div>
-
       <div className="relative text-center flex flex-col items-center">
-        {/* Logo */}
-        <div className="mb-6 opacity-0 animate-[splashFadeUp_0.8s_ease-out_0.1s_forwards]">
+        {/* Logo principal - reemplaza el texto "Full Vision" */}
+        <div className="mb-8 opacity-0 animate-[splashFadeUp_0.8s_ease-out_0.1s_forwards]">
           <div className="relative">
-            {/* Glow behind logo */}
-            <div
-              className="absolute inset-0 m-auto w-40 h-40 rounded-full blur-2xl opacity-20"
-              style={{ background: "linear-gradient(135deg, hsl(205 86% 18%), hsl(174 72% 44%))" }}
-            />
             {logoUrl ? (
               <img
                 src={logoUrl}
-                alt="Full Vision"
-                className={`relative w-44 h-44 mx-auto object-contain transition-all duration-700 ${
+                alt="Full Vision - Especialistas en Salud Visual"
+                className={`relative w-[40rem] h-auto max-h-[70vh] mx-auto object-contain transition-all duration-700 ${
                   logoLoaded ? "opacity-100 scale-100" : "opacity-0 scale-90"
                 }`}
                 onLoad={() => setLogoLoaded(true)}
@@ -73,7 +56,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minD
                 }}
               />
             ) : (
-              <div className="relative w-44 h-44 mx-auto flex items-center justify-center">
+              <div className="relative w-96 h-96 mx-auto flex items-center justify-center">
                 <svg className="w-full h-full" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="50" cy="50" r="45" fill="hsl(174 72% 44%)" opacity="0.1" />
                   <path d="M35 50 L50 35 L65 50 L50 65 Z" fill="hsl(205 86% 18%)" />
@@ -84,24 +67,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minD
           </div>
         </div>
 
-        {/* Brand name */}
-        <h1
-          className="text-3xl font-bold tracking-wide mb-2 opacity-0 animate-[splashFadeUp_0.8s_ease-out_0.4s_forwards]"
-          style={{ color: "hsl(205 86% 18%)" }}
-        >
-          Full Vision
-        </h1>
-
-        {/* Tagline */}
-        <p
-          className="text-sm tracking-[0.2em] uppercase mb-10 opacity-0 animate-[splashFadeUp_0.8s_ease-out_0.6s_forwards]"
-          style={{ color: "hsl(174 72% 40%)" }}
-        >
-          Especialistas en Salud Visual
-        </p>
 
         {/* Loading bar */}
-        <div className="w-48 h-[3px] rounded-full overflow-hidden opacity-0 animate-[splashFadeUp_0.6s_ease-out_0.8s_forwards]"
+        <div className="w-48 h-[3px] rounded-full overflow-hidden opacity-0 animate-[splashFadeUp_0.6s_ease-out_0.6s_forwards]"
           style={{ backgroundColor: "hsl(205 86% 18% / 0.08)" }}
         >
           <div

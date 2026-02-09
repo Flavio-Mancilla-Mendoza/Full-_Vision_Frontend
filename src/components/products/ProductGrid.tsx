@@ -47,18 +47,20 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {products.map((product, index) => (
         <ProductCard
           key={product.id}
           id={product.id}
           name={product.name}
+          slug={product.slug}
           image_url={product.image_url}
           image_alt={product.name}
           base_price={product.base_price}
           sale_price={product.sale_price}
           discount_percentage={product.discount_percentage}
           brand_name={product.brand?.name}
+          lens_type={product.lens_type}
           onAddToCart={() => onAddToCart(product)}
           isAddingToCart={isAddingToCart && addingProductId === product.id}
           isInCart={cartItems.some((item) => item.id === product.id)}

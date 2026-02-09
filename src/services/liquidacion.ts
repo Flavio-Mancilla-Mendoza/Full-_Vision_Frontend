@@ -4,6 +4,7 @@ import api from "@/services/api";
 export interface LiquidacionProduct {
   id: string;
   name: string;
+  slug?: string;
   description: string | null;
   base_price: number;
   sale_price: number | null;

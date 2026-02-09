@@ -28,19 +28,21 @@ const BestSellerProductCard = ({
   addingProductId?: string;
   cartItems: CartItemWithProductLocal[];
 }) => {
-  const isInCart = cartItems.some((item) => item.id === product.id);
-  const quantity = cartItems.find((item) => item.id === product.id)?.quantity || 0;
+  const isInCart = cartItems.some((item) => item.product_id === product.id);
+  const quantity = cartItems.find((item) => item.product_id === product.id)?.quantity || 0;
 
   return (
     <ProductCard
       id={product.id}
       name={product.name}
+      slug={product.slug}
       image_url={product.image_url}
       image_alt={product.image_alt || product.name}
       base_price={product.base_price}
       sale_price={product.sale_price}
       discount_percentage={product.discount_percentage}
-      brand_name={product.frame_style}
+      brand_name={product.brand?.name || product.brand_name}
+      lens_type={product.lens_type}
       onAddToCart={() => onAddToCart(product)}
       isAddingToCart={isAddingToCart && addingProductId === product.id}
       isInCart={isInCart}

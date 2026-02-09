@@ -77,15 +77,17 @@ const SaleCarousel = () => {
                   <ProductCard
                     id={item.id}
                     name={item.name}
+                    slug={item.slug}
                     image_url={item.image_url || ""}
                     image_alt={item.product_images?.[0]?.alt_text || item.name}
                     base_price={item.base_price}
                     sale_price={finalPrice}
                     discount_percentage={discountPercentage}
+                    brand_name={item.brand?.name}
                     onAddToCart={() => handleAddToCart(item)}
                     isAddingToCart={isAddingToCart && addingProductId === item.id}
-                    isInCart={cartItems.some((cartItem) => cartItem.id === item.id)}
-                    quantity={cartItems.find((cartItem) => cartItem.id === item.id)?.quantity || 0}
+                    isInCart={cartItems.some((cartItem) => cartItem.product_id === item.id)}
+                    quantity={cartItems.find((cartItem) => cartItem.product_id === item.id)?.quantity || 0}
                     loading={index < 3 ? "eager" : "lazy"}
                     index={index}
                   />

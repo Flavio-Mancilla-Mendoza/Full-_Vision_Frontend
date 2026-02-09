@@ -1,5 +1,5 @@
-// src/hooks/cart/useCartMutations.ts - Mutations del carrito
-import { useMutation } from "@tanstack/react-query";
+// src/hooks/cart/useCartMutations.ts - Mutations del carrito con optimistic updates
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useCartDrawer } from "@/hooks/useCartDrawer";
@@ -8,6 +8,7 @@ import {
   updateCartItemQuantity,
   removeFromCart as removeFromCartDB,
   clearCart as clearCartDB,
+  type CartItemWithProductLocal,
 } from "@/services/cart";
 import type { IProduct } from "@/types/IProducts";
 
@@ -23,7 +24,7 @@ interface UseCartMutationsProps {
 function useErrorHandler() {
   const { toast } = useToast();
 
-  return (error: Error) => {
+  return (error: Error, _variables: unknown, context: { previousItems?: CartItemWithProductLocal[] } | undefined) => {
     if (!error.message.includes("Usuario no autenticado")) {
       toast({
         title: "❌ Error",
@@ -35,13 +36,16 @@ function useErrorHandler() {
 }
 
 /**
- * Hook con todas las mutations del carrito
+ * Hook con todas las mutations del carrito (optimistic updates)
  */
 export function useCartMutations({ userId, isAuthenticated, invalidateCart }: UseCartMutationsProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { openDrawer } = useCartDrawer();
   const handleError = useErrorHandler();
+  const queryClient = useQueryClient();
+
+  const cartQueryKey = ["cart", userId];
 
   const redirectToLogin = (actionMessage: string) => {
     toast({
@@ -60,7 +64,7 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
     return true;
   };
 
-  // Mutation: Agregar al carrito
+  // Mutation: Agregar al carrito (con optimistic update)
   const addToCartMutation = useMutation({
     mutationFn: async ({
       productId,
@@ -71,28 +75,76 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
       quantity: number;
       product: IProduct;
     }) => {
-      console.log("🛒 Iniciando addToCart - Producto:", productId, "Cantidad:", quantity);
-
       if (!requireAuth("agregar productos al carrito")) {
         throw new Error("Usuario no autenticado");
       }
-
-      console.log("✅ Usuario autenticado, procediendo con addToCart");
       return { result: await addToCartDB(productId, quantity), productId };
+    },
+    onMutate: async ({ productId, quantity, product }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
+
+      // Snapshot previous value
+      const previousItems = queryClient.getQueryData<CartItemWithProductLocal[]>(cartQueryKey);
+
+      // Optimistically update
+      queryClient.setQueryData<CartItemWithProductLocal[]>(cartQueryKey, (old = []) => {
+        const existingIndex = old.findIndex((item) => item.product_id === productId);
+        if (existingIndex >= 0) {
+          // Increment quantity
+          const updated = [...old];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: updated[existingIndex].quantity + quantity,
+          };
+          return updated;
+        }
+        // Add new item
+        return [
+          ...old,
+          {
+            id: `temp-${Date.now()}`,
+            user_id: userId || "",
+            product_id: productId,
+            quantity,
+            product: {
+              id: product.id,
+              name: product.name,
+              base_price: product.base_price,
+              sale_price: product.sale_price ?? null,
+              discount_percentage: product.discount_percentage ?? null,
+              image_url: product.image_url ?? null,
+              product_images: product.product_images ?? [],
+              brand: product.brand ?? null,
+              category: product.category ?? null,
+              stock: product.stock ?? 0,
+            },
+            created_at: new Date().toISOString(),
+          } as CartItemWithProductLocal,
+        ];
+      });
+
+      return { previousItems };
     },
     onSuccess: () => {
       invalidateCart();
       toast({
         title: "✅ Producto agregado",
         description: "El producto se agregó al carrito exitosamente",
-        duration: 3000,
+        duration: 2000,
       });
       openDrawer();
     },
-    onError: handleError,
+    onError: (error: Error, _variables, context) => {
+      // Rollback on error
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartQueryKey, context.previousItems);
+      }
+      handleError(error, _variables, context);
+    },
   });
 
-  // Mutation: Actualizar cantidad
+  // Mutation: Actualizar cantidad (con optimistic update)
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ cartItemId, quantity }: { cartItemId: string; quantity: number }) => {
       if (!requireAuth("actualizar cantidades")) {
@@ -100,17 +152,44 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
       }
       return await updateCartItemQuantity(cartItemId, quantity);
     },
-    onSuccess: invalidateCart,
-    onError: handleError,
+    onMutate: async ({ cartItemId, quantity }) => {
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
+      const previousItems = queryClient.getQueryData<CartItemWithProductLocal[]>(cartQueryKey);
+
+      queryClient.setQueryData<CartItemWithProductLocal[]>(cartQueryKey, (old = []) =>
+        old.map((item) => (item.id === cartItemId ? { ...item, quantity } : item))
+      );
+
+      return { previousItems };
+    },
+    onSuccess: () => {
+      invalidateCart();
+    },
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartQueryKey, context.previousItems);
+      }
+      handleError(error, _variables, context);
+    },
   });
 
-  // Mutation: Eliminar del carrito
+  // Mutation: Eliminar del carrito (con optimistic update)
   const removeFromCartMutation = useMutation({
     mutationFn: async (cartItemId: string) => {
       if (!requireAuth("eliminar productos del carrito")) {
         throw new Error("Usuario no autenticado");
       }
       return await removeFromCartDB(cartItemId);
+    },
+    onMutate: async (cartItemId) => {
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
+      const previousItems = queryClient.getQueryData<CartItemWithProductLocal[]>(cartQueryKey);
+
+      queryClient.setQueryData<CartItemWithProductLocal[]>(cartQueryKey, (old = []) =>
+        old.filter((item) => item.id !== cartItemId)
+      );
+
+      return { previousItems };
     },
     onSuccess: () => {
       invalidateCart();
@@ -119,16 +198,27 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
         description: "El producto se eliminó del carrito",
       });
     },
-    onError: handleError,
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartQueryKey, context.previousItems);
+      }
+      handleError(error, _variables, context);
+    },
   });
 
-  // Mutation: Limpiar carrito
+  // Mutation: Limpiar carrito (con optimistic update)
   const clearCartMutation = useMutation({
     mutationFn: async () => {
       if (!requireAuth("limpiar el carrito")) {
         throw new Error("Usuario no autenticado");
       }
       return await clearCartDB(userId!);
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: cartQueryKey });
+      const previousItems = queryClient.getQueryData<CartItemWithProductLocal[]>(cartQueryKey);
+      queryClient.setQueryData(cartQueryKey, []);
+      return { previousItems };
     },
     onSuccess: () => {
       invalidateCart();
@@ -137,7 +227,12 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
         description: "Se eliminaron todos los productos del carrito",
       });
     },
-    onError: handleError,
+    onError: (error: Error, _variables, context) => {
+      if (context?.previousItems) {
+        queryClient.setQueryData(cartQueryKey, context.previousItems);
+      }
+      handleError(error, _variables, context);
+    },
   });
 
   return {

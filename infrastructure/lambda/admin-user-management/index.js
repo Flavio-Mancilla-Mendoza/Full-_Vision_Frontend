@@ -1,4 +1,4 @@
-/**
+        /**
  * Admin User Management Lambda
  * Operaciones CRUD de usuarios vía Cognito User Pool (solo admin)
  *

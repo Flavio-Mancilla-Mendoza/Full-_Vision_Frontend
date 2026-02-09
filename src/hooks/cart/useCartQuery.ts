@@ -23,7 +23,6 @@ export function useCartQuery() {
       if (!user?.id) {
         throw new Error("Usuario no válido");
       }
-      console.log("🔄 Ejecutando query del carrito para usuario:", user.id);
       return getCartItems(user.id);
     },
     enabled: isAuthenticated && !!user?.id && !userLoading,

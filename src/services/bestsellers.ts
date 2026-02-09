@@ -12,6 +12,7 @@ import { getApiUrl } from "@/services/api";
 export interface BestSellerProduct {
   id: string;
   name: string;
+  slug?: string;
   description?: string;
   base_price: number;
   sale_price?: number;
@@ -39,6 +40,7 @@ export interface BestSellerProduct {
   // Categoría y marca
   category_name?: string;
   brand_name?: string;
+  brand?: { id: string; name: string; slug: string };
 }
 
 // ================================================================

@@ -241,6 +241,10 @@ export class ApiGatewayStack extends cdk.Stack {
     const publicProducts = publicResource.addResource("products");
     publicProducts.addMethod("GET", publicIntegration);
 
+    // /public/products/{slug} - detalle de producto por slug
+    const publicProductBySlug = publicProducts.addResource("{slug}");
+    publicProductBySlug.addMethod("GET", publicIntegration);
+
     // /public/bestsellers
     const publicBestsellers = publicResource.addResource("bestsellers");
     publicBestsellers.addMethod("GET", publicIntegration);
@@ -260,10 +264,9 @@ export class ApiGatewayStack extends cdk.Stack {
     const publicFiltersByGender = publicFilters.addResource("{gender}");
     publicFiltersByGender.addMethod("GET", publicIntegration);
 
-    // /public/products-by-gender/{gender}
+    // /public/products-by-gender (gender via query param)
     const publicProductsByGender = publicResource.addResource("products-by-gender");
-    const publicProductsByGenderParam = publicProductsByGender.addResource("{gender}");
-    publicProductsByGenderParam.addMethod("GET", publicIntegration);
+    publicProductsByGender.addMethod("GET", publicIntegration);
 
     // /public/site-content
     const publicSiteContent = publicResource.addResource("site-content");

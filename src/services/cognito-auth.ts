@@ -274,6 +274,12 @@ export async function logoutUser() {
  */
 export async function getCurrentAuthUser(): Promise<User | null> {
   try {
+    // Primero verificar que la sesión tenga tokens válidos
+    const session = await fetchAuthSession();
+    if (!session.tokens?.accessToken) {
+      return null;
+    }
+
     const user = await getCurrentUser();
     const attributes = await fetchUserAttributes();
 
@@ -285,7 +291,10 @@ export async function getCurrentAuthUser(): Promise<User | null> {
       attributes,
     };
   } catch (error) {
-    console.error("Error obteniendo usuario actual:", error);
+    // Sesión expirada/inválida - limpiar silenciosamente
+    try {
+      await signOut();
+    } catch { /* ignorar error de signOut */ }
     return null;
   }
 }
@@ -296,6 +305,12 @@ export async function getCurrentAuthUser(): Promise<User | null> {
 export async function getCurrentAuthSession(): Promise<AuthSession> {
   try {
     const session = await fetchAuthSession();
+
+    // Si no hay tokens válidos, no intentar obtener usuario
+    if (!session.tokens?.accessToken) {
+      return { user: null, accessToken: null, idToken: null };
+    }
+
     const user = await getCurrentAuthUser();
 
     return {
@@ -315,11 +330,13 @@ export async function getCurrentAuthSession(): Promise<AuthSession> {
 
 /**
  * Verificar si el usuario está autenticado
+ * Valida que existan tokens válidos, no solo datos en cache
  */
 export async function isAuthenticated(): Promise<boolean> {
   try {
-    await getCurrentUser();
-    return true;
+    const session = await fetchAuthSession();
+    // Verificar que hay tokens válidos, no solo datos en cache
+    return !!session.tokens?.accessToken;
   } catch {
     return false;
   }

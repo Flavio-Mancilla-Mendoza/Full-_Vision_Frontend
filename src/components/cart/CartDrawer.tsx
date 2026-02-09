@@ -1,5 +1,5 @@
 // src/components/cart/CartDrawer.tsx - Panel deslizante del carrito
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,8 +10,76 @@ import { useOptimizedAuthCart as useAuthCart } from "@/hooks/useOptimizedAuthCar
 import { useCartDrawer } from "@/hooks/useCartDrawer";
 import { CartItemWithProductLocal } from "@/services/cart";
 import { formatCurrency } from "@/lib/utils";
+import { calculateProductPrice } from "@/hooks/cart/cartUtils";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+
+// Memoized item component — only re-renders when its own props change
+interface CartDrawerItemProps {
+  item: CartItemWithProductLocal;
+  onUpdateQuantity: (cartItemId: string, quantity: number) => void;
+  onRemove: (cartItemId: string) => void;
+}
+
+const CartDrawerItem = React.memo(function CartDrawerItem({ item, onUpdateQuantity, onRemove }: CartDrawerItemProps) {
+  const product = item.product;
+  const productImage = product?.image_url || product?.product_images?.[0]?.url || "/placeholder-glasses.jpg";
+
+  const finalPrice = product ? calculateProductPrice(product) : 0;
+
+  return (
+    <div className="flex gap-3 py-3">
+      <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+        <img
+          src={productImage}
+          alt={product?.name || "Producto"}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/placeholder-glasses.jpg";
+          }}
+        />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-sm line-clamp-2 mb-1">{product?.name || "Producto"}</h4>
+
+        {product?.brand?.name && <p className="text-xs text-muted-foreground mb-2">{product.brand.name}</p>}
+
+        <div className="flex items-center justify-between">
+          <span className="font-semibold text-sm">{formatCurrency(finalPrice)}</span>
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
+            >
+              <Minus className="w-3 h-3" />
+            </Button>
+
+            <span className="mx-2 text-sm font-medium min-w-[2ch] text-center">{item.quantity}</span>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 ml-1 text-destructive" onClick={() => onRemove(item.id)}>
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground mt-1">Total: {formatCurrency(finalPrice * item.quantity)}</div>
+      </div>
+    </div>
+  );
+});
 
 interface CartDrawerProps {
   children?: React.ReactNode;
@@ -21,15 +89,28 @@ interface CartDrawerProps {
 
 const CartDrawer = React.forwardRef<HTMLDivElement, CartDrawerProps>(({ children, open, onOpenChange }, ref) => {
   const navigate = useNavigate();
-  const { cartItems, cartSummary, updateQuantity, removeFromCart, isAuthenticated } = useAuthCart();
   const { isOpen: globalIsOpen, setOpen: setGlobalOpen } = useCartDrawer();
 
   // Si se pasan props de control, las usamos, sino usamos el estado global
   const isOpen = open !== undefined ? open : globalIsOpen;
   const setIsOpen = onOpenChange || setGlobalOpen;
 
-  const hasItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
+  // Only subscribe to cart data when drawer is open
+  const { cartItems, cartSummary, updateQuantity, removeFromCart, isAuthenticated } = useAuthCart();
+
+  const hasItems = isOpen && cartItems && Array.isArray(cartItems) && cartItems.length > 0;
   const itemCount = cartSummary?.totalItems || 0;
+
+  // Stable callbacks for memoized children
+  const handleUpdateQuantity = useCallback(
+    (cartItemId: string, quantity: number) => updateQuantity({ cartItemId, quantity }),
+    [updateQuantity]
+  );
+
+  const handleRemove = useCallback(
+    (cartItemId: string) => removeFromCart(cartItemId),
+    [removeFromCart]
+  );
 
   const handleViewFullCart = () => {
     setIsOpen(false);
@@ -119,8 +200,8 @@ const CartDrawer = React.forwardRef<HTMLDivElement, CartDrawerProps>(({ children
                     <CartDrawerItem
                       key={item.id}
                       item={item}
-                      onUpdateQuantity={(productId: string, quantity: number) => updateQuantity({ cartItemId: item.id, quantity })}
-                      onRemove={(productId: string) => removeFromCart(item.id)}
+                      onUpdateQuantity={handleUpdateQuantity}
+                      onRemove={handleRemove}
                     />
                   ))}
               </div>
@@ -192,83 +273,5 @@ const CartDrawer = React.forwardRef<HTMLDivElement, CartDrawerProps>(({ children
 });
 
 CartDrawer.displayName = "CartDrawer";
-
-// Componente para cada item en el drawer
-interface CartDrawerItemProps {
-  item: CartItemWithProductLocal;
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemove: (productId: string) => void;
-}
-
-function CartDrawerItem({ item, onUpdateQuantity, onRemove }: CartDrawerItemProps) {
-  const product = item.product;
-  const productImage = product?.image_url || product?.product_images?.[0]?.url || "/placeholder-glasses.jpg";
-
-  // Calcular precio final con descuento
-  let finalPrice = product?.base_price || 0;
-  if (product?.sale_price) {
-    finalPrice = product.sale_price;
-  } else if (product?.discount_percentage && product.discount_percentage > 0) {
-    finalPrice = (product?.base_price || 0) * (1 - product.discount_percentage / 100);
-  }
-
-  return (
-    <div className="flex gap-3 py-3">
-      {/* Imagen del producto */}
-      <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-        <img
-          src={productImage}
-          alt={product?.name || "Producto"}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/placeholder-glasses.jpg";
-          }}
-        />
-      </div>
-
-      {/* Información del producto */}
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm line-clamp-2 mb-1">{product?.name || "Producto"}</h4>
-
-        {product?.brand?.name && <p className="text-xs text-muted-foreground mb-2">{product.brand.name}</p>}
-
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-sm">{formatCurrency(finalPrice)}</span>
-
-          {/* Controles de cantidad */}
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => onUpdateQuantity(item.product_id, Math.max(1, item.quantity - 1))}
-            >
-              <Minus className="w-3 h-3" />
-            </Button>
-
-            <span className="mx-2 text-sm font-medium min-w-[2ch] text-center">{item.quantity}</span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)}
-            >
-              <Plus className="w-3 h-3" />
-            </Button>
-
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0 ml-1 text-destructive" onClick={() => onRemove(item.product_id)}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Precio total del item */}
-        <div className="text-xs text-muted-foreground mt-1">Total: {formatCurrency(finalPrice * item.quantity)}</div>
-      </div>
-    </div>
-  );
-}
 
 export default CartDrawer;
