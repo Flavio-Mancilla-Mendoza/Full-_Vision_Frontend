@@ -29,8 +29,8 @@ Runtime.UserCodeSyntaxError: SyntaxError: Cannot use import statement outside a 
 
 ## PENDIENTE para mañana
 
-### 1. ❌ Convertir los 15 archivos ESM restantes a CJS
-Estos archivos usan `import`/`export` pero NO están en la cadena de `require()` activa. No causan error **ahora**, pero si algún día se importan, van a romper:
+### 1. ✅ Convertir los 15 archivos ESM restantes a CJS
+**COMPLETADO (8 Feb 2026)** — 13 archivos convertidos de `export`/`import` a `module.exports`/`require()`, 2 eliminados (`lib/router.js` y `lib/supabase.js` eran duplicados muertos). Deploy exitoso via CDK.
 
 **handlers/**
 - `appointments.js`
@@ -54,8 +54,8 @@ Estos archivos usan `import`/`export` pero NO están en la cadena de `require()`
 **Opción A:** Convertirlos a CJS (como se hizo con `product-utils.js` y `s3.js`)
 **Opción B:** Eliminarlos si son duplicados obsoletos de una migración anterior
 
-### 2. ❌ Hacer deploy con CDK (no solo AWS CLI)
-El deploy actual fue directo con `aws lambda update-function-code`. Para que CDK detecte los cambios:
+### 2. ✅ Hacer deploy con CDK (no solo AWS CLI)
+**COMPLETADO** — Múltiples deploys exitosos con `npx cdk deploy --all`.
 ```bash
 cd infrastructure
 # Borrar cache de assets
