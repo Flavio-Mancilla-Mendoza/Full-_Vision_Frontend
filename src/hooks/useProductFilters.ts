@@ -5,7 +5,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { type ProductFilters } from "@/services/productCategories";
-import { type DynamicAttribute } from "@/services/dynamicAttributes";
 import { calculateMinDiscount } from "@/lib/product-utils";
 
 interface FilterState {
@@ -23,14 +22,13 @@ interface PriceRange {
 
 interface UseProductFiltersOptions {
   defaultPriceRange?: PriceRange;
-  dynamicAttributes?: DynamicAttribute[];
 }
 
 export function useProductFilters(
   gender: string,
   options: UseProductFiltersOptions = {}
 ) {
-  const { defaultPriceRange, dynamicAttributes = [] } = options;
+  const { defaultPriceRange } = options;
 
   // Estados de filtros locales (UI)
   const [filters, setFilters] = useState<FilterState>({
@@ -106,25 +104,12 @@ export function useProductFilters(
       price_max: defaultPriceRange?.max ?? 999999,
     };
 
-    // Limpiar atributos dinámicos
-    dynamicAttributes.forEach((attr) => {
-      clearedFilters[attr.slug] = [];
-    });
-
     setFilters(clearedFilters);
   };
 
   // Contar filtros activos (sin incluir valores por defecto)
   const activeFiltersCount = useMemo(() => {
     let count = filters.cyber_discount.length + filters.brand.length;
-
-    // Contar atributos dinámicos activos
-    dynamicAttributes.forEach((attr) => {
-      const filterValues = filters[attr.slug] as string[] | undefined;
-      if (filterValues && filterValues.length > 0) {
-        count += filterValues.length;
-      }
-    });
 
     // Contar filtro de precio si difiere de los valores por defecto
     const defaultMin = defaultPriceRange?.min ?? 0;
@@ -134,7 +119,7 @@ export function useProductFilters(
     }
 
     return count;
-  }, [filters, dynamicAttributes, defaultPriceRange]);
+  }, [filters, defaultPriceRange]);
 
   // Toggle sección de acordeón
   const toggleSection = (slug: string) => {

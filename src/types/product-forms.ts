@@ -37,8 +37,7 @@ export interface ProductFormData {
   stock_quantity?: number;
   min_stock_level?: number;
   
-  // Atributos de producto (valores hardcoded para compatibilidad legacy)
-  // TODO: Migrar a sistema de atributos dinámicos (product_attributes)
+  // Atributos de producto
   frame_material?: string;
   lens_type?: string;
   frame_style?: string;
@@ -143,29 +142,6 @@ export interface ProductImageUploadResponse {
   alt_text: string | null;
   is_primary: boolean;
   sort_order: number;
-}
-
-// ============================================
-// TIPOS PARA ATRIBUTOS DINÁMICOS (FUTURO)
-// ============================================
-
-/**
- * Estructura para atributos dinámicos del producto
- * Para cuando se migre de campos hardcoded a sistema dinámico
- */
-export interface ProductAttributeValue {
-  attribute_type_id: string;
-  attribute_value_id: string;
-  attribute_slug: string; // e.g., "frame_material", "lens_type"
-  value_slug: string; // e.g., "metal", "polarized"
-  display_name: string; // e.g., "Metal", "Polarizado"
-}
-
-/**
- * Payload para asociar atributos dinámicos a un producto
- */
-export interface ProductWithAttributes extends CreateProductPayload {
-  attributes?: ProductAttributeValue[];
 }
 
 // ============================================

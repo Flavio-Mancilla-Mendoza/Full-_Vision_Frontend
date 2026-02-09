@@ -4,7 +4,6 @@
  */
 
 import type { ProductWithBrand } from "@/services/productCategories";
-import type { DynamicAttribute } from "@/services/dynamicAttributes";
 
 /**
  * Valida que un objeto sea un producto válido
@@ -92,33 +91,6 @@ export function isValidDynamicFiltersData(data: unknown): data is DynamicFilters
 }
 
 /**
- * Valida que sea un atributo dinámico válido
- */
-export function isValidDynamicAttribute(attr: unknown): attr is DynamicAttribute {
-  if (!attr || typeof attr !== "object") return false;
-
-  const a = attr as Record<string, unknown>;
-
-  return (
-    typeof a.slug === "string" &&
-    typeof a.display_name === "string" &&
-    Array.isArray(a.values) &&
-    a.values.every((v: unknown) => {
-      if (!v || typeof v !== "object") return false;
-      const val = v as Record<string, unknown>;
-      return typeof val.value === "string" && typeof val.display_name === "string";
-    })
-  );
-}
-
-/**
- * Valida array de atributos dinámicos
- */
-export function isValidDynamicAttributesArray(data: unknown): data is DynamicAttribute[] {
-  return Array.isArray(data) && data.every(isValidDynamicAttribute);
-}
-
-/**
  * Sanitiza y retorna valores seguros para productos
  */
 export function sanitizeProductsData(data: unknown): ProductsByGenderResponse {
@@ -176,13 +148,4 @@ export function sanitizeDynamicFiltersData(data: unknown): DynamicFiltersData {
   };
 }
 
-/**
- * Sanitiza array de atributos dinámicos
- */
-export function sanitizeDynamicAttributes(data: unknown): DynamicAttribute[] {
-  if (!Array.isArray(data)) {
-    return [];
-  }
 
-  return data.filter(isValidDynamicAttribute);
-}

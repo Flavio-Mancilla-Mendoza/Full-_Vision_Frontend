@@ -126,7 +126,6 @@ export async function resendConfirmationCode(email: string) {
 export async function loginUser(email: string, password: string) {
   try {
     // Asegurar que Amplify esté configurado antes del login
-    console.log("🔐 Intentando login para:", email);
     ensureAmplifyConfigured();
 
     const signInInput: SignInInput = {
@@ -197,8 +196,6 @@ export async function completeNewPasswordChallenge(
   userAttributes?: { given_name?: string; family_name?: string; name?: string }
 ) {
   try {
-    console.log("🔑 Completando cambio de contraseña requerido");
-
     // Preparar atributos de usuario si se proporcionan
     interface ConfirmSignInOptions {
       challengeResponse: string;

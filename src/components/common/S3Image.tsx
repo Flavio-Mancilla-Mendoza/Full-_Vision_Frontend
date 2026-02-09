@@ -16,11 +16,8 @@ export function S3Image({ s3Key, url: directUrl, fallback, className, alt, ...pr
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    console.log("🖼️ S3Image - s3Key:", s3Key, "directUrl:", directUrl);
-
     // Si hay URL directa, usarla inmediatamente
     if (directUrl) {
-      console.log("✅ S3Image - Usando URL directa");
       setUrl(directUrl);
       setError(false);
       setLoading(false);
@@ -29,7 +26,6 @@ export function S3Image({ s3Key, url: directUrl, fallback, className, alt, ...pr
 
     // Si no hay s3Key ni URL directa, error
     if (!s3Key) {
-      console.log("❌ S3Image - No hay s3Key ni URL directa");
       setLoading(false);
       setError(true);
       return;
@@ -38,11 +34,10 @@ export function S3Image({ s3Key, url: directUrl, fallback, className, alt, ...pr
     // Obtener URL desde Supabase Storage usando s3Key
     try {
       const { data } = supabase.storage.from("product-images").getPublicUrl(s3Key);
-      console.log("✅ S3Image - URL generada desde s3Key:", data.publicUrl);
       setUrl(data.publicUrl);
       setError(false);
     } catch (err) {
-      console.error("❌ S3Image - Error getting image URL:", err);
+      console.error("S3Image - Error getting image URL:", err);
       setError(true);
     } finally {
       setLoading(false);

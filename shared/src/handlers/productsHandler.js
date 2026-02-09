@@ -233,63 +233,7 @@ async function getDynamicFilters(gender) {
   }
 }
 
-/**
- * Obtener atributos dinámicos disponibles para un género
- * (frame_size, frame_material, etc.)
- */
-async function getDynamicAttributes(gender) {
-  try {
-    console.log('🔍 getDynamicAttributes para:', gender);
-
-    // Query para obtener valores únicos de atributos
-    let query = supabase
-      .from('products')
-      .select('frame_size, frame_material, lens_type')
-      .eq('is_active', true)
-      .not('frame_size', 'is', null)
-      .not('frame_material', 'is', null);
-
-    if (gender && gender !== 'all') {
-      query = query.eq('gender', gender.toLowerCase());
-    }
-
-    const { data: products, error } = await query;
-
-    if (error) throw error;
-
-    // Construir atributos únicos
-    const attributes = [
-      {
-        slug: 'frame_size',
-        name: 'Talla',
-        display_name: 'Talla del Marco',
-        values: [...new Set(products.map((p) => p.frame_size).filter(Boolean))].sort(),
-      },
-      {
-        slug: 'frame_material',
-        name: 'Material',
-        display_name: 'Material del Marco',
-        values: [...new Set(products.map((p) => p.frame_material).filter(Boolean))].sort(),
-      },
-      {
-        slug: 'lens_type',
-        name: 'Tipo de Lente',
-        display_name: 'Tipo de Lente',
-        values: [...new Set(products.map((p) => p.lens_type).filter(Boolean))].sort(),
-      },
-    ].filter((attr) => attr.values.length > 0);
-
-    console.log('✅ Atributos dinámicos obtenidos:', attributes.length);
-
-    return attributes;
-  } catch (error) {
-    console.error('❌ Error en getDynamicAttributes:', error);
-    return [];
-  }
-}
-
 module.exports = {
   getProductsWithFilters,
   getDynamicFilters,
-  getDynamicAttributes,
 };

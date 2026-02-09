@@ -135,8 +135,6 @@ export async function updateOrderStatus(orderId: string, status: Order["status"]
 
   // Reactivar productos si la orden se cancela
   if (status === "cancelled") {
-    console.log("🔓 Orden cancelada, reactivando productos...");
-
     const { data: orderItems, error: itemsError } = await supabase.from("order_items").select("product_id").eq("order_id", orderId);
 
     if (!itemsError && orderItems && orderItems.length > 0) {
@@ -151,9 +149,7 @@ export async function updateOrderStatus(orderId: string, status: Order["status"]
         .in("id", productIds);
 
       if (reactivateError) {
-        console.error("⚠️ Error reactivando productos:", reactivateError);
-      } else {
-        console.log("✅ Productos reactivados:", productIds.length);
+        console.error("Error reactivando productos:", reactivateError);
       }
     }
   }
@@ -263,7 +259,6 @@ export async function createOrderFromCart(
   if (itemsError) throw itemsError;
 
   // Desactivar productos en la orden
-  console.log("🔒 Desactivando productos en la orden...");
   const productIds = cartItems.map((item) => item.product_id).filter((id): id is string => id !== null);
 
   const { error: deactivateError } = await supabase
@@ -275,9 +270,7 @@ export async function createOrderFromCart(
     .in("id", productIds);
 
   if (deactivateError) {
-    console.error("⚠️ Error desactivando productos:", deactivateError);
-  } else {
-    console.log("✅ Productos desactivados temporalmente:", productIds.length);
+    console.error("Error desactivando productos:", deactivateError);
   }
 
   // Limpiar el carrito

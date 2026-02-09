@@ -278,8 +278,6 @@ export async function updateOpticalProduct(productId: string, updates: Partial<O
  * Desactivar producto (marcar como reservado/vendido)
  */
 export async function deactivateProduct(productId: string, reason?: string) {
-  console.log(`🔒 Desactivando producto: ${productId}`, reason ? `(${reason})` : "");
-
   const { data, error } = await supabase
     .from("products")
     .update({
@@ -291,7 +289,6 @@ export async function deactivateProduct(productId: string, reason?: string) {
     .single();
 
   if (error) throw error;
-  console.log("✅ Producto desactivado");
   return data;
 }
 
@@ -299,8 +296,6 @@ export async function deactivateProduct(productId: string, reason?: string) {
  * Reactivar producto
  */
 export async function reactivateProduct(productId: string) {
-  console.log(`🔓 Reactivando producto: ${productId}`);
-
   const { data, error } = await supabase
     .from("products")
     .update({
@@ -312,7 +307,6 @@ export async function reactivateProduct(productId: string) {
     .single();
 
   if (error) throw error;
-  console.log("✅ Producto reactivado");
   return data;
 }
 
@@ -320,14 +314,11 @@ export async function reactivateProduct(productId: string) {
  * Reactivar todos los productos de una orden
  */
 export async function reactivateOrderProducts(orderId: string) {
-  console.log(`🔄 Reactivando productos de la orden: ${orderId}`);
-
   const { data: orderItems, error: itemsError } = await supabase.from("order_items").select("product_id").eq("order_id", orderId);
 
   if (itemsError) throw itemsError;
 
   if (!orderItems || orderItems.length === 0) {
-    console.log("⚠️ No hay productos en esta orden");
     return;
   }
 
@@ -343,7 +334,6 @@ export async function reactivateOrderProducts(orderId: string) {
 
   if (reactivateError) throw reactivateError;
 
-  console.log(`✅ ${productIds.length} productos reactivados`);
   return productIds;
 }
 
@@ -377,17 +367,13 @@ export async function deleteOpticalProduct(productId: string) {
   }
 
   try {
-    console.log("🔍 Obteniendo imágenes del producto:", productId);
     const images = await getProductImages(productId);
-    console.log("📸 Imágenes encontradas:", images.length);
 
-    console.log("🗑️ Eliminando producto de la BD:", productId);
     const { data, error } = await supabase.from("products").delete().eq("id", productId).select().single();
 
     if (error) throw error;
 
     if (images && images.length > 0) {
-      console.log("🗑️ Eliminando", images.length, "imágenes del Storage...");
       for (const image of images) {
         if (image.url) {
           try {
@@ -397,13 +383,11 @@ export async function deleteOpticalProduct(productId: string) {
           }
         }
       }
-      console.log("✅ Imágenes eliminadas del Storage");
     }
 
-    console.log("✅ Producto eliminado completamente:", productId);
     return data;
   } catch (error) {
-    console.error("❌ Error eliminando producto:", error);
+    console.error("Error eliminando producto:", error);
     throw error;
   }
 }

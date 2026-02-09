@@ -13,9 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { X, ChevronDown } from "lucide-react";
-import { DynamicFilters } from "@/components/products/DynamicFilters";
 import { formatPrice } from "@/lib/product-utils";
-import { type DynamicAttribute } from "@/services/dynamicAttributes";
 
 interface FilterOption {
   value: string;
@@ -43,7 +41,6 @@ interface FilterSidebarProps {
   discounts: FilterOption[];
   brands: FilterOption[];
   priceRange: PriceRange;
-  dynamicAttributes: DynamicAttribute[];
   onToggleFilter: (filterKey: keyof FilterState, value: string) => void;
   onUpdateFilter: (filterKey: keyof FilterState, value: string[] | number) => void;
   onToggleSection: (slug: string) => void;
@@ -57,7 +54,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   discounts,
   brands,
   priceRange,
-  dynamicAttributes,
   onToggleFilter,
   onUpdateFilter,
   onToggleSection,
@@ -214,20 +210,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </CollapsibleContent>
         </Collapsible>
 
-        <Separator />
-
-        {/* Filtros Dinámicos */}
-        <DynamicFilters
-          attributes={dynamicAttributes}
-          filters={Object.fromEntries(
-            Object.entries(filters).filter(([_, v]) => Array.isArray(v))
-          ) as Record<string, string[]>}
-          openSections={openSections}
-          onToggleSection={onToggleSection}
-          onToggleFilter={(slug, value) =>
-            onToggleFilter(slug as keyof FilterState, value)
-          }
-        />
       </CardContent>
     </Card>
   );

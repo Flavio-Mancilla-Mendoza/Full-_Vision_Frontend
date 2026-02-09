@@ -84,8 +84,6 @@ function buildQueryParams(filters: ProductFilters): string {
 // Obtener filtros dinámicos basados en productos reales por género
 export const getDynamicFiltersForGender = async (gender: string) => {
   try {
-    console.log("🔍 getDynamicFiltersForGender - Buscando productos para:", gender);
-
     const response = await fetch(`${api.getApiUrl()}/public/filters/${gender}`);
 
     if (!response.ok) {
@@ -104,8 +102,6 @@ export const getDynamicFiltersForGender = async (gender: string) => {
         priceRange: { min: 0, max: 1000 },
       };
     }
-
-    console.log(`✅ Filtros obtenidos para "${gender}":`, data);
 
     // Asegurar estructura correcta con valores por defecto
     return {
@@ -140,8 +136,6 @@ export const getProductsByGender = async (filters: ProductFilters): Promise<Prod
     }
 
     const data: ProductsResponse = await response.json();
-
-    console.log(`✅ Productos obtenidos: ${data.products.length} de ${data.total} total (página ${data.page}/${data.totalPages})`);
 
     return data;
   } catch (error) {

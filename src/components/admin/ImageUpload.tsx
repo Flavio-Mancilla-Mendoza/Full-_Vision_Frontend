@@ -41,17 +41,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   const uploadToStorage = useCallback(async (file: File): Promise<{ url: string; s3_key: string }> => {
     // Upload to S3 via Lambda
-    console.log("🚀 Iniciando upload para:", file.name, "Tamaño:", file.size);
     const result = await uploadProductImage(file, "products");
 
-    console.log("📦 Resultado de uploadProductImage:", result);
-
     if (!result.success || !result.s3Key) {
-      console.error("❌ Error en upload:", result.error);
       throw new Error(result.error || "Error al subir imagen");
     }
-
-    console.log("✅ Imagen subida a S3:", result.s3Key);
 
     return {
       url: result.url || result.s3Key, // URL o key temporalmente
@@ -80,8 +74,6 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
   // Acciones sobre la lista de imágenes modularizadas
   const { removeImage, setPrimaryImage, moveImage } = useImageListActions(images, setImages);
-
-  console.log(images);
 
   return (
     <div className="space-y-4">

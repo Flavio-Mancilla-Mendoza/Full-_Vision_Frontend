@@ -76,8 +76,6 @@ export async function uploadProductImage(file: File, productId?: string): Promis
     const region = import.meta.env.VITE_AWS_REGION || "sa-east-1";
     const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${s3Key}`;
 
-    console.log("✅ Imagen subida a S3:", { s3Key, url: publicUrl });
-
     return {
       s3Key,
       url: publicUrl,
@@ -89,14 +87,27 @@ export async function uploadProductImage(file: File, productId?: string): Promis
 }
 
 /**
- * Eliminar imagen de S3
+ * Eliminar imagen de S3 vía Lambda
  */
 export async function deleteProductImageFromS3(s3Key: string): Promise<void> {
   try {
-    console.log("🗑️ Eliminando imagen de S3:", s3Key);
-    console.warn("⚠️ Eliminación física de S3 no implementada. Solo se elimina registro de BD.");
+    if (!s3Key) return;
+
+    const encodedKey = encodeURIComponent(s3Key);
+    const response = await fetch(`${api.getApiUrl()}/products/images/${encodedKey}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${await getAuthToken()}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error eliminando imagen de S3: ${response.status} - ${errorText}`);
+    }
   } catch (error) {
-    console.warn("Error en deleteProductImageFromS3:", error);
+    console.error("Error en deleteProductImageFromS3:", error);
+    throw error;
   }
 }
 
@@ -105,16 +116,19 @@ export async function deleteProductImageFromS3(s3Key: string): Promise<void> {
  */
 export async function deleteProductImageFromStorage(imageUrl: string): Promise<void> {
   try {
-    if (imageUrl.includes(".s3.") || imageUrl.includes("amazonaws.com")) {
-      const match = imageUrl.match(/\/products\/(.+)$/);
+    if (imageUrl.includes(".s3.") || imageUrl.includes("amazonaws.com") || imageUrl.includes("cloudfront.net")) {
+      const match = imageUrl.match(/\/products\/(.+?)(?:\?.*)?$/);
       if (match) {
         const s3Key = `products/${match[1]}`;
         await deleteProductImageFromS3(s3Key);
       }
+    } else if (imageUrl.startsWith("products/")) {
+      // Already an s3Key
+      await deleteProductImageFromS3(imageUrl);
     } else {
       const urlParts = imageUrl.split("/storage/v1/object/public/products/");
       if (urlParts.length === 2) {
-        console.warn("⚠️ Imagen legacy de Supabase Storage. No se eliminará físicamente.");
+        console.warn("Imagen legacy de Supabase Storage. No se eliminará físicamente.");
       }
     }
   } catch (error) {
@@ -205,19 +219,14 @@ export async function setProductPrimaryImage(productId: string, imageId: string)
  * Corregir URLs de imágenes rotas
  */
 export async function fixBrokenImageUrls(): Promise<{ fixed: number; errors: number }> {
-  console.log("🔧 Iniciando corrección de URLs de imágenes rotas...");
-
   try {
     const { data: images, error } = await supabase.from("product_images").select("id, url, s3_key").not("url", "is", null);
 
     if (error) throw error;
 
     if (!images || images.length === 0) {
-      console.log("✅ No hay imágenes para corregir");
       return { fixed: 0, errors: 0 };
     }
-
-    console.log(`🔍 Revisando ${images.length} imágenes...`);
 
     let fixed = 0;
     let errors = 0;
@@ -275,7 +284,6 @@ export async function fixBrokenImageUrls(): Promise<{ fixed: number; errors: num
 
           if (correctedUrl !== image.url) {
             needsFix = true;
-            console.log(`🔧 Corrigiendo URL: ${image.url} → ${correctedUrl}`);
           }
         } else if (!image.url.startsWith("http") && !image.url.startsWith("//")) {
           needsFix = true;
@@ -289,7 +297,6 @@ export async function fixBrokenImageUrls(): Promise<{ fixed: number; errors: num
 
           correctedUrl = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
           correctedS3Key = key;
-          console.log(`🔧 Corrigiendo URL incompleta: ${image.url} → ${correctedUrl}`);
         }
 
         if (needsFix) {
@@ -302,23 +309,21 @@ export async function fixBrokenImageUrls(): Promise<{ fixed: number; errors: num
             .eq("id", image.id);
 
           if (updateError) {
-            console.error(`❌ Error actualizando imagen ${image.id}:`, updateError);
+            console.error(`Error actualizando imagen ${image.id}:`, updateError);
             errors++;
           } else {
-            console.log(`✅ Imagen ${image.id} corregida`);
             fixed++;
           }
         }
       } catch (imageError) {
-        console.error(`❌ Error procesando imagen ${image.id}:`, imageError);
+        console.error(`Error procesando imagen ${image.id}:`, imageError);
         errors++;
       }
     }
 
-    console.log(`🎉 Corrección completada: ${fixed} imágenes corregidas, ${errors} errores`);
     return { fixed, errors };
   } catch (error) {
-    console.error("❌ Error en fixBrokenImageUrls:", error);
+    console.error("Error en fixBrokenImageUrls:", error);
     throw error;
   }
 }

@@ -51,8 +51,6 @@ export interface CreatePreferenceRequest {
  */
 export async function createMercadoPagoPreference(request: CreatePreferenceRequest): Promise<MercadoPagoPreference> {
   try {
-    console.log("🔵 Creando preferencia de Mercado Pago:", request.orderNumber);
-
     const baseUrl = window.location.origin;
 
     // Llamar a Lambda vía API Gateway que crea la preferencia
@@ -89,10 +87,9 @@ export async function createMercadoPagoPreference(request: CreatePreferenceReque
       throw new Error("No se recibió URL de pago de Mercado Pago");
     }
 
-    console.log("✅ Preferencia creada:", data.id);
     return data;
   } catch (error) {
-    console.error("❌ Error en createMercadoPagoPreference:", error);
+    console.error("Error en createMercadoPagoPreference:", error);
     throw error;
   }
 }

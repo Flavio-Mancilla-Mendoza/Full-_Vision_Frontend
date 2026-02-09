@@ -77,31 +77,4 @@ export function useDynamicFiltersForGender(gender: string, options: UseProductsB
   });
 }
 
-/**
- * Hook para obtener atributos dinámicos por género
- */
-export function useDynamicAttributesForGender(gender: string, options: UseProductsByGenderOptions = {}) {
-  const { enabled = true, staleTime = 1000 * 60 * 5, retry = 2 } = options;
 
-  return useQuery({
-    queryKey: ["attributes", "gender", gender],
-    queryFn: async () => {
-      const { getDynamicAttributesForGender } = await import("@/services/dynamicAttributes");
-      const data = await getDynamicAttributesForGender(gender);
-
-      // Validación: debe ser un array
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: enabled && !!gender,
-    staleTime,
-    gcTime: 1000 * 60 * 20,
-    retry: (failureCount, error) => {
-      if (error instanceof Error && error.message.includes("404")) {
-        return false;
-      }
-      return typeof retry === "number" ? failureCount < retry : retry;
-    },
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-}

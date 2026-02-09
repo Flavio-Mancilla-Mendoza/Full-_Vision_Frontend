@@ -11,18 +11,6 @@ async function getAuthToken(): Promise<string> {
     const session = await fetchAuthSession();
     const token = session.tokens?.idToken?.toString();
 
-    // Debug: Ver los grupos del usuario y toda la información de la sesión
-    const payload = session.tokens?.idToken?.payload;
-    console.log("============= DEBUG AUTH INFO =============");
-    console.log("🔐 User groups:", payload?.["cognito:groups"]);
-    console.log("📧 User email:", payload?.email);
-    console.log("👤 Username:", payload?.["cognito:username"]);
-    console.log("🆔 Sub:", payload?.sub);
-    console.log("⏰ Token exp:", payload?.exp ? new Date(payload.exp * 1000).toLocaleString() : "N/A");
-    console.log("🎫 Has token:", !!token);
-    console.log("📋 Full payload:", payload);
-    console.log("==========================================");
-
     if (!token) {
       throw new Error("No authentication token available");
     }
@@ -69,12 +57,8 @@ export async function uploadProductImage(file: File, folder: string = "products"
       };
     }
 
-    console.log(`📤 Solicitando URL de subida para: ${file.name}`);
-    console.log(`🔗 API URL: ${API_URL}/products/upload-url`);
-
     // 1. Obtener URL pre-firmada del Lambda
     const token = await getAuthToken();
-    console.log(`🔑 Token obtenido: ${token.substring(0, 20)}...`);
 
     const response = await fetch(`${API_URL}/products/upload-url`, {
       method: "POST",
@@ -88,19 +72,12 @@ export async function uploadProductImage(file: File, folder: string = "products"
       }),
     });
 
-    console.log(`📡 Response status: ${response.status}`);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Error response:`, errorText);
       throw new Error(`Error obteniendo URL de subida: ${response.status} - ${errorText}`);
     }
 
     const uploadData: { uploadUrl: string; s3Key: string; fileName: string } = await response.json();
-
-    console.log("🔗 URL de subida obtenida:", uploadData.s3Key);
-    console.log("📋 Content-Type usado:", file.type);
-    console.log("🔗 Presigned URL:", uploadData.uploadUrl.substring(0, 100) + "...");
 
     // 2. Subir archivo directamente a S3
     const uploadResponse = await fetch(uploadData.uploadUrl, {
@@ -114,8 +91,6 @@ export async function uploadProductImage(file: File, folder: string = "products"
     if (!uploadResponse.ok) {
       throw new Error(`Error subiendo a S3: ${uploadResponse.status} ${uploadResponse.statusText}`);
     }
-
-    console.log("✅ Imagen subida a S3:", uploadData.s3Key);
 
     // Generar URL completa de CloudFront para consistencia
     const cloudFrontUrl = import.meta.env.VITE_IMAGES_BASE_URL;
@@ -136,7 +111,7 @@ export async function uploadProductImage(file: File, folder: string = "products"
 }
 
 /**
- * Elimina una imagen de S3 (TODO: implementar endpoint en Lambda)
+ * Elimina una imagen de S3 vía Lambda
  */
 export async function deleteProductImage(s3Key: string): Promise<UploadImageResult> {
   try {
@@ -147,17 +122,27 @@ export async function deleteProductImage(s3Key: string): Promise<UploadImageResu
       };
     }
 
-    console.log(`🗑️ Eliminando imagen: ${s3Key}`);
+    const token = await getAuthToken();
+    const encodedKey = encodeURIComponent(s3Key);
 
-    // TODO: Implementar endpoint DELETE /products/images/{key} en Lambda
-    console.warn("⚠️ Eliminación de S3 no implementada aún");
+    const response = await fetch(`${API_URL}/products/images/${encodedKey}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Error eliminando imagen: ${response.status} - ${errorData}`);
+    }
 
     return {
       success: true,
       s3Key,
     };
   } catch (error) {
-    console.error("Error inesperado:", error);
+    console.error("Error eliminando imagen de S3:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Error desconocido",
@@ -189,11 +174,9 @@ export async function getPublicUrl(s3Key: string): Promise<PresignedUrlResult> {
     if (cloudFrontUrl) {
       // Usar CloudFront (recomendado)
       publicUrl = `${cloudFrontUrl}/${s3Key}`;
-      console.log(`✅ URL generada vía CloudFront: ${publicUrl}`);
     } else {
       // Fallback a S3 directo (solo si CloudFront no está configurado)
       publicUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${s3Key}`;
-      console.log(`⚠️ URL generada vía S3 directo (considera configurar CloudFront): ${publicUrl}`);
     }
 
     return {

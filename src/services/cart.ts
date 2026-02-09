@@ -93,7 +93,7 @@ export async function getCartItems(userId?: string): Promise<CartItemWithProduct
       const items = await cartApi.list();
       return items as CartItemWithProductLocal[];
     } catch (error) {
-      console.error("❌ Error al obtener carrito desde API Gateway:", error);
+      console.error("Error al obtener carrito desde API Gateway:", error);
       return [];
     }
   }
@@ -103,7 +103,7 @@ export async function getCartItems(userId?: string): Promise<CartItemWithProduct
     const cognitoUserId = await getCurrentUserId();
 
     if (!cognitoUserId) {
-      console.error("❌ Error de autenticación: Usuario no autenticado");
+      console.error("Error de autenticación: Usuario no autenticado");
       throw new Error("Usuario no autenticado");
     }
 
@@ -112,21 +112,19 @@ export async function getCartItems(userId?: string): Promise<CartItemWithProduct
 
   // Usar función optimizada directamente
   try {
-    console.log("🔄 Obteniendo carrito para usuario:", userId);
     const data = await getCartItemsSimple(userId);
-    console.log("✅ Carrito obtenido:", data);
 
     return (data || []).map((item) => ({
       ...item,
       product: (item.product as unknown as OpticalProduct) ?? null,
     }));
   } catch (error) {
-    console.error("❌ Error al obtener carrito:", error);
+    console.error("Error al obtener carrito:", error);
 
     // Si es error 406 o de políticas, dar más información
     if (error instanceof Error) {
       if (error.message.includes("406") || error.message.includes("Not Acceptable")) {
-        console.error("🚫 Error 406: Problema con políticas RLS o autenticación");
+        console.error("Error 406: Problema con políticas RLS o autenticación");
         throw new Error("Error de permisos: Verifica que estés autenticado correctamente");
       }
     }
@@ -156,7 +154,7 @@ export async function addToCart(
       });
       return result as CartItemWithProductLocal;
     } catch (error) {
-      console.error("❌ Error al agregar al carrito desde API Gateway:", error);
+      console.error("Error al agregar al carrito desde API Gateway:", error);
       throw error;
     }
   }
@@ -180,12 +178,10 @@ export async function addToCart(
   // Si existe un item, actualizar cantidad
   if (existingItems && existingItems.length > 0) {
     const existingItem = existingItems[0];
-    console.log("🔄 Producto ya existe en carrito, actualizando cantidad");
     return await updateCartItemQuantity(existingItem.id, existingItem.quantity + quantity);
   }
 
   // Si no existe, crear nuevo item
-  console.log("➕ Creando nuevo item en carrito");
   const { data, error } = await supabase
     .from("cart_items")
     .insert({
@@ -199,25 +195,22 @@ export async function addToCart(
     .single();
 
   if (error) {
-    console.error("❌ Error adding to cart:", error);
+    console.error("Error adding to cart:", error);
     throw new Error("Error al agregar producto al carrito: " + error.message);
   }
 
   if (!data) {
-    console.error("❌ No se retornaron datos después de insertar");
     throw new Error("Error: No se pudo crear el item del carrito");
   }
 
   // Obtener información del producto separadamente
-  console.log("🔍 Obteniendo detalles del producto:", productId);
   const { data: product, error: productError } = await supabase.from("products").select("*").eq("id", productId).single();
 
   if (productError) {
-    console.warn("⚠️ Error fetching product details:", productError);
+    console.warn("Error fetching product details:", productError);
     // No lanzar error aquí, solo log warning
   }
 
-  console.log("✅ Item agregado al carrito exitosamente");
   return {
     ...data,
     product: (product as OpticalProduct) || null,
@@ -239,7 +232,7 @@ export async function updateCartItemQuantity(cartItemId: string, quantity: numbe
       const result = await cartApi.updateQuantity(cartItemId, quantity);
       return result as CartItemWithProductLocal;
     } catch (error) {
-      console.error("❌ Error al actualizar cantidad desde API Gateway:", error);
+      console.error("Error al actualizar cantidad desde API Gateway:", error);
       throw error;
     }
   }
@@ -284,7 +277,7 @@ export async function removeFromCart(cartItemId: string): Promise<void> {
       await cartApi.remove(cartItemId);
       return;
     } catch (error) {
-      console.error("❌ Error al eliminar del carrito desde API Gateway:", error);
+      console.error("Error al eliminar del carrito desde API Gateway:", error);
       throw error;
     }
   }
@@ -308,7 +301,7 @@ export async function clearCart(userId?: string): Promise<void> {
       await cartApi.clear();
       return;
     } catch (error) {
-      console.error("❌ Error al vaciar carrito desde API Gateway:", error);
+      console.error("Error al vaciar carrito desde API Gateway:", error);
       throw error;
     }
   }
@@ -338,7 +331,7 @@ export async function getCartSummary(userId?: string): Promise<CartSummary> {
       const summary = await cartApi.getSummary();
       return summary as CartSummary;
     } catch (error) {
-      console.error("❌ Error al obtener resumen desde API Gateway:", error);
+      console.error("Error al obtener resumen desde API Gateway:", error);
       // Retornar carrito vacío en caso de error
       return {
         items: [],
@@ -390,7 +383,7 @@ export async function getCartItemCount(): Promise<number> {
     try {
       return await cartApi.getCount();
     } catch (error) {
-      console.error("❌ Error al obtener contador desde API Gateway:", error);
+      console.error("Error al obtener contador desde API Gateway:", error);
       return 0;
     }
   }
