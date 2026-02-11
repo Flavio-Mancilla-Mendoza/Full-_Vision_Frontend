@@ -12,7 +12,8 @@ export function useProducts(initialPage = 1, initialPageSize = 50) {
     initialFilters: {},
   });
 
-  const refresh = useCallback(() => pagination.refresh(), [pagination]);
+  const { refresh: paginationRefresh } = pagination;
+  const refresh = useCallback(() => paginationRefresh(), [paginationRefresh]);
 
   const createProduct = useCallback(
     async (data: Partial<OpticalProduct>) => {

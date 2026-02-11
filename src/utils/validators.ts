@@ -54,43 +54,6 @@ export function isValidProductsByGenderResponse(data: unknown): data is Products
 }
 
 /**
- * Valida la estructura de filtros dinámicos
- */
-export interface DynamicFiltersData {
-  discounts: {
-    value: string;
-    label: string;
-    min: number;
-    max: number;
-    count: number;
-  }[];
-  brands: {
-    value: string;
-    label: string;
-    count: number;
-  }[];
-  priceRange: {
-    min: number;
-    max: number;
-  };
-}
-
-export function isValidDynamicFiltersData(data: unknown): data is DynamicFiltersData {
-  if (!data || typeof data !== "object") return false;
-
-  const d = data as Record<string, unknown>;
-
-  return (
-    Array.isArray(d.discounts) &&
-    Array.isArray(d.brands) &&
-    d.priceRange !== null &&
-    typeof d.priceRange === "object" &&
-    typeof (d.priceRange as Record<string, unknown>).min === "number" &&
-    typeof (d.priceRange as Record<string, unknown>).max === "number"
-  );
-}
-
-/**
  * Sanitiza y retorna valores seguros para productos
  */
 export function sanitizeProductsData(data: unknown): ProductsByGenderResponse {
@@ -113,38 +76,6 @@ export function sanitizeProductsData(data: unknown): ProductsByGenderResponse {
       d.groupedByStyle && typeof d.groupedByStyle === "object" ? (d.groupedByStyle as Record<string, ProductWithBrand[]>) : {},
     availableStyles: Array.isArray(d.availableStyles) ? d.availableStyles.filter((s): s is string => typeof s === "string") : [],
     availableMaterials: Array.isArray(d.availableMaterials) ? d.availableMaterials.filter((m): m is string => typeof m === "string") : [],
-  };
-}
-
-/**
- * Sanitiza datos de filtros dinámicos
- */
-export function sanitizeDynamicFiltersData(data: unknown): DynamicFiltersData {
-  const defaultData: DynamicFiltersData = {
-    discounts: [],
-    brands: [],
-    priceRange: { min: 0, max: 1000 },
-  };
-
-  if (!data || typeof data !== "object") {
-    return defaultData;
-  }
-
-  const d = data as Record<string, unknown>;
-
-  return {
-    discounts: Array.isArray(d.discounts) ? d.discounts : [],
-    brands: Array.isArray(d.brands) ? d.brands : [],
-    priceRange: {
-      min:
-        d.priceRange && typeof d.priceRange === "object" && typeof (d.priceRange as Record<string, unknown>).min === "number"
-          ? (d.priceRange as Record<string, number>).min
-          : 0,
-      max:
-        d.priceRange && typeof d.priceRange === "object" && typeof (d.priceRange as Record<string, unknown>).max === "number"
-          ? (d.priceRange as Record<string, number>).max
-          : 1000,
-    },
   };
 }
 

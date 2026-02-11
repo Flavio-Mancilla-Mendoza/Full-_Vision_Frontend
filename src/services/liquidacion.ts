@@ -1,6 +1,9 @@
 // src/services/liquidacion.ts - Servicio para productos en liquidación
 import api from "@/services/api";
 
+// Re-exportar funciones de precio centralizadas para mantener compatibilidad
+export { calculateFinalPrice, calculateDiscountPercentage } from "@/lib/product-utils";
+
 export interface LiquidacionProduct {
   id: string;
   name: string;
@@ -46,30 +49,4 @@ export async function getLiquidacionProducts(limit: number = 10): Promise<Liquid
     console.error("Error fetching liquidacion products:", error);
     return [];
   }
-}
-
-/**
- * Calcula el precio final con descuento
- */
-export function calculateFinalPrice(product: LiquidacionProduct): number {
-  if (product.sale_price && product.sale_price < product.base_price) {
-    return product.sale_price;
-  }
-
-  if (product.discount_percentage && product.discount_percentage > 0) {
-    return product.base_price * (1 - product.discount_percentage / 100);
-  }
-
-  return product.base_price;
-}
-
-/**
- * Calcula el porcentaje de descuento real
- */
-export function calculateDiscountPercentage(product: LiquidacionProduct): number | null {
-  if (product.sale_price && product.sale_price < product.base_price) {
-    return Math.round(((product.base_price - product.sale_price) / product.base_price) * 100);
-  }
-
-  return product.discount_percentage ?? null;
 }

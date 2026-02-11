@@ -1,47 +1,31 @@
-// src/services/admin/featured.ts - Productos destacados y bestsellers (Admin)
-import { supabase } from "@/lib/supabase";
+// src/services/admin/featured.ts - Productos destacados y bestsellers (Admin) via API Gateway
+import { productsApi, ordersApi } from "@/services/api";
 import type { OpticalProduct } from "@/types";
 
 /**
  * Obtener productos destacados
  */
 export async function getFeaturedProducts(): Promise<OpticalProduct[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      category:product_categories(*),
-      brand:brands(*),
-      product_images(id, product_id, url, s3_key, alt_text, sort_order, is_primary, created_at)
-    `)
-    .eq("is_featured", true)
-    .eq("is_active", true)
-    .order("updated_at", { ascending: false })
-    .limit(8);
+  const allProducts = await productsApi.list();
+  const featured = (allProducts || []).filter(
+    (p) => p.is_featured && p.is_active !== false
+  );
 
-  if (error) throw error;
+  const processedData = featured.map((product) => ({
+    ...product,
+    product_images: product.product_images?.filter((img) => img.is_primary) || [],
+  }));
 
-  const processedData =
-    data?.map((product) => ({
-      ...product,
-      product_images: product.product_images?.filter((img) => img.is_primary) || [],
-    })) || [];
-
-  return processedData as unknown as OpticalProduct[];
+  return processedData.slice(0, 8) as unknown as OpticalProduct[];
 }
 
 /**
  * Marcar producto como destacado
  */
 export async function setProductAsFeatured(productId: string, featured: boolean = true) {
-  const { data, error } = await supabase
-    .from("products")
-    .update({ is_featured: featured, updated_at: new Date().toISOString() })
-    .eq("id", productId)
-    .select()
-    .single();
-
-  if (error) throw error;
+  const data = await productsApi.update(productId, {
+    is_featured: featured,
+  });
   return data;
 }
 
@@ -49,25 +33,17 @@ export async function setProductAsFeatured(productId: string, featured: boolean 
  * Obtener productos disponibles para destacar
  */
 export async function getAvailableProductsForFeatured(): Promise<OpticalProduct[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      category:product_categories(*),
-      brand:brands(*),
-      product_images(id, product_id, url, s3_key, alt_text, sort_order, is_primary, created_at)
-    `)
-    .eq("is_featured", false)
-    .eq("is_active", true)
-    .order("name", { ascending: true });
+  const allProducts = await productsApi.list();
+  const available = (allProducts || []).filter(
+    (p) => !p.is_featured && p.is_active !== false
+  );
 
-  if (error) throw error;
-
-  const processedData =
-    data?.map((product) => ({
+  const processedData = available
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""))
+    .map((product) => ({
       ...product,
       product_images: product.product_images?.filter((img) => img.is_primary) || [],
-    })) || [];
+    }));
 
   return processedData as unknown as OpticalProduct[];
 }
@@ -76,48 +52,49 @@ export async function getAvailableProductsForFeatured(): Promise<OpticalProduct[
  * Obtener productos más vendidos
  */
 export async function getBestSellingProducts(limit: number = 10): Promise<OpticalProduct[]> {
-  const { data: salesData, error: salesError } = await supabase
-    .from("order_items")
-    .select(`
-      product_id,
-      quantity,
-      products!inner(
-        *,
-        category:product_categories(*),
-        brand:brands(*),
-        product_images(*)
-      )
-    `)
-    .eq("products.is_active", true);
+  try {
+    // Get all orders and products
+    const [orders, allProducts] = await Promise.all([
+      ordersApi.list(),
+      productsApi.list(),
+    ]);
 
-  if (salesError) {
-    console.error("Error fetching sales data:", salesError);
-  }
+    // Build a map of product sales from order items
+    const productSales: Record<string, number> = {};
 
-  if (salesData && salesData.length > 0) {
-    const productSales: Record<string, { product: OpticalProduct; totalSold: number }> = {};
-
-    salesData.forEach((item) => {
-      const productId = item.product_id;
-      if (item.products && productId && typeof item.products === "object" && !Array.isArray(item.products)) {
-        if (!productSales[productId]) {
-          productSales[productId] = {
-            product: item.products as OpticalProduct,
-            totalSold: 0,
-          };
+    for (const order of orders || []) {
+      if (order.order_items) {
+        for (const item of order.order_items) {
+          if (item.product_id) {
+            productSales[item.product_id] = (productSales[item.product_id] || 0) + (item.quantity || 0);
+          }
         }
-        productSales[productId].totalSold += Number(item.quantity) || 0;
       }
-    });
+    }
 
-    const sortedProducts = Object.values(productSales)
-      .sort((a, b) => b.totalSold - a.totalSold)
-      .slice(0, limit)
-      .map((item) => item.product);
+    if (Object.keys(productSales).length > 0) {
+      // Create a map of products by ID
+      const productMap: Record<string, OpticalProduct> = {};
+      for (const product of (allProducts || []) as unknown as OpticalProduct[]) {
+        if (product.is_active !== false) {
+          productMap[product.id] = product;
+        }
+      }
 
-    return sortedProducts;
+      // Sort by sales and return top sellers
+      const sortedProducts = Object.entries(productSales)
+        .filter(([id]) => productMap[id])
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, limit)
+        .map(([id]) => productMap[id]);
+
+      return sortedProducts;
+    }
+  } catch (error) {
+    console.error("Error fetching sales data:", error);
   }
 
+  // Fallback: simulate best sellers
   return await simulateBestSellers(limit);
 }
 
@@ -125,23 +102,12 @@ export async function getBestSellingProducts(limit: number = 10): Promise<Optica
  * Simular best sellers cuando no hay datos de ventas
  */
 async function simulateBestSellers(limit: number): Promise<OpticalProduct[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      category:product_categories(*),
-      brand:brands(*),
-      product_images(*)
-    `)
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(limit * 2);
+  const allProducts = (await productsApi.list()) as unknown as OpticalProduct[];
+  const activeProducts = (allProducts || []).filter((p) => p.is_active !== false);
 
-  if (error) throw error;
+  if (activeProducts.length === 0) return [];
 
-  if (!data || data.length === 0) return [];
-
-  const productsWithScore = data.map((product) => {
+  const productsWithScore = activeProducts.map((product) => {
     let score = 0;
 
     if (product.is_bestseller) score += 100;

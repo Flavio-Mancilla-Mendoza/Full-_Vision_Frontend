@@ -48,4 +48,10 @@ test-*.js
 apps/**/.env
 !apps/**/.env.example
 infrastructure/.env.dev
+
+# Sensitive metadata
+full-vision-lambdas-metadata.json
+resp*.json
+response*.json
 !infrastructure/.env.example
+.env*.local

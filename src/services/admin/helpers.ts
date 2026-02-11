@@ -1,5 +1,4 @@
 // src/services/admin/helpers.ts - Funciones auxiliares compartidas
-import { supabase } from "@/lib/supabase";
 
 /**
  * Parsear fechas en diferentes formatos (DD-MM-YYYY, YYYY-MM-DD, ISO)
@@ -68,14 +67,15 @@ export async function getAuthToken(): Promise<string | null> {
 }
 
 /**
- * Verificar si el usuario actual es admin
+ * Verificar si el usuario actual es admin (via JWT cognito:groups)
  */
 export async function isAdmin(): Promise<boolean> {
-  const { getCurrentUserId } = await import("@/services/cognito-auth");
-  const userId = await getCurrentUserId();
-  if (!userId) return false;
-
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", userId).single();
-
-  return profile?.role === "admin";
+  try {
+    const { fetchAuthSession } = await import("@aws-amplify/auth");
+    const session = await fetchAuthSession();
+    const groups = (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || [];
+    return groups.includes("admin") || groups.includes("Admins");
+  } catch {
+    return false;
+  }
 }

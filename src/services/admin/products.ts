@@ -1,8 +1,6 @@
-// src/services/admin/products.ts - Gestión de productos (Admin)
-import { supabase } from "@/lib/supabase";
-import * as api from "@/services/api";
+// src/services/admin/products.ts - Gestión de productos (Admin) via API Gateway
+import { productsApi, brandsApi, categoriesApi, ordersApi, getApiUrl } from "@/services/api";
 import { getAuthToken } from "./helpers";
-import { generateSKU as clientGenerateSKU } from "@/lib/product-utils";
 import type { OpticalProduct, ProductCategory, Brand } from "@/types";
 import type { Database } from "@/types/database";
 
@@ -13,9 +11,7 @@ export type { OpticalProduct, ProductCategory, Brand };
  * Obtener todas las categorías
  */
 export async function getAllCategories(): Promise<ProductCategory[]> {
-  const { data, error } = await supabase.from("product_categories").select("*").order("name", { ascending: true });
-
-  if (error) throw error;
+  const data = await categoriesApi.list();
   return (data || []) as unknown as ProductCategory[];
 }
 
@@ -23,9 +19,7 @@ export async function getAllCategories(): Promise<ProductCategory[]> {
  * Obtener todas las marcas
  */
 export async function getAllBrands(): Promise<Brand[]> {
-  const { data, error } = await supabase.from("brands").select("*").order("name", { ascending: true });
-
-  if (error) throw error;
+  const data = await brandsApi.list();
   return (data || []) as unknown as Brand[];
 }
 
@@ -33,68 +27,38 @@ export async function getAllBrands(): Promise<Brand[]> {
  * Verificar si un SKU ya existe
  */
 export async function checkSKUExists(sku: string, excludeProductId?: string): Promise<boolean> {
-  if (api.USE_PROXY_API) {
-    try {
-      const res = await fetch(`${api.getApiUrl()}/products/check-sku`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku, excludeProductId }),
-      });
-      if (!res.ok) return false;
-      const json = await res.json();
-      return !!json.exists;
-    } catch (err) {
-      console.error("Error checking SKU via API:", err);
-      return false;
-    }
-  }
-
-  let query = supabase.from("products").select("id").eq("sku", sku);
-  if (excludeProductId) {
-    query = query.neq("id", excludeProductId);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("Error checking SKU:", error);
+  try {
+    const res = await fetch(`${getApiUrl()}/products/check-sku`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sku, excludeProductId }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return !!json.exists;
+  } catch (err) {
+    console.error("Error checking SKU via API:", err);
     return false;
   }
-
-  return data && data.length > 0;
 }
 
 /**
  * Verificar si un slug ya existe
  */
 export async function checkSlugExists(slug: string, excludeProductId?: string): Promise<boolean> {
-  if (api.USE_PROXY_API) {
-    try {
-      const res = await fetch(`${api.getApiUrl()}/products/check-slug`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, excludeProductId }),
-      });
-      if (!res.ok) return false;
-      const json = await res.json();
-      return !!json.exists;
-    } catch (err) {
-      console.error("Error checking slug via API:", err);
-      return false;
-    }
-  }
-
-  let query = supabase.from("products").select("id").eq("slug", slug);
-  if (excludeProductId) {
-    query = query.neq("id", excludeProductId);
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    console.error("Error checking slug:", error);
+  try {
+    const res = await fetch(`${getApiUrl()}/products/check-slug`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, excludeProductId }),
+    });
+    if (!res.ok) return false;
+    const json = await res.json();
+    return !!json.exists;
+  } catch (err) {
+    console.error("Error checking slug via API:", err);
     return false;
   }
-
-  return data && data.length > 0;
 }
 
 /**
@@ -109,230 +73,156 @@ export async function generateProductSKU(opts: {
   const { name, frame_style, frame_size, excludeProductId } = opts;
   if (!name) throw new Error("name is required");
 
-  if (api.USE_PROXY_API) {
-    try {
-      const response = await fetch(`${api.getApiUrl()}/products/generate-sku`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await getAuthToken()}`,
-        },
-        body: JSON.stringify({ name, frame_style, frame_size, excludeProductId }),
-      });
+  const response = await fetch(`${getApiUrl()}/products/generate-sku`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await getAuthToken()}`,
+    },
+    body: JSON.stringify({ name, frame_style, frame_size, excludeProductId }),
+  });
 
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error(err || `HTTP ${response.status}`);
-      }
-
-      const json = await response.json();
-      return json.sku;
-    } catch (error) {
-      console.error("Error generating SKU via API:", error);
-      throw error;
-    }
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(err || `HTTP ${response.status}`);
   }
 
-  // Legacy: local generation + uniqueness check
-  let sku = clientGenerateSKU(name, frame_style, frame_size);
-  let attempts = 0;
-  while (attempts < 5) {
-    const exists = await checkSKUExists(sku, excludeProductId);
-    if (!exists) break;
-    attempts++;
-    sku = clientGenerateSKU(name, frame_style, frame_size);
-  }
-  return sku;
+  const json = await response.json();
+  return json.sku;
 }
 
 /**
  * Obtener todos los productos
  */
 export async function getAllOpticalProducts(): Promise<OpticalProduct[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select(`
-      *,
-      category:product_categories(*),
-      brand:brands(*),
-      product_images(*)
-    `)
-    .order("updated_at", { ascending: false });
-
-  if (error) throw error;
+  const data = await productsApi.list();
   return (data || []) as unknown as OpticalProduct[];
 }
 
 /**
- * Obtener productos con paginación y filtros
+ * Obtener productos con paginación y filtros (client-side filtering)
  */
 export async function getAllOpticalProductsPaginated(
   page = 1,
   limit = 50,
   filters: { search?: string; brandId?: string; discounted?: boolean } = {}
 ): Promise<{ data: OpticalProduct[]; count: number; totalPages: number }> {
-  let query = supabase
-    .from("products")
-    .select(`
-      *,
-      category:product_categories(*),
-      brand:brands(*),
-      product_images(*)
-    `, { count: "exact" })
-    .order("updated_at", { ascending: false })
-    .range((page - 1) * limit, page * limit - 1);
+  const allProducts = (await productsApi.list()) as unknown as OpticalProduct[];
+  let filtered = allProducts || [];
 
   if (filters.brandId) {
-    query = query.eq("brand_id", filters.brandId);
+    filtered = filtered.filter((p) => p.brand_id === filters.brandId);
   }
 
   if (typeof filters.discounted === "boolean") {
-    if (filters.discounted) query = query.gt("discount_percentage", 0);
-    else query = query.eq("discount_percentage", 0);
+    if (filters.discounted) {
+      filtered = filtered.filter((p) => (p.discount_percentage ?? 0) > 0);
+    } else {
+      filtered = filtered.filter((p) => (p.discount_percentage ?? 0) === 0);
+    }
   }
 
   if (filters.search) {
-    const q = `%${filters.search}%`;
-    query = query.or(`name.ilike.${q},description.ilike.${q},sku.ilike.${q},slug.ilike.${q}`);
+    const q = filters.search.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.slug?.toLowerCase().includes(q)
+    );
   }
 
-  const { data, error, count } = await query;
+  const count = filtered.length;
+  const totalPages = Math.ceil(count / limit);
+  const start = (page - 1) * limit;
+  const paged = filtered.slice(start, start + limit);
 
-  if (error) throw error;
-
-  return {
-    data: (data || []) as OpticalProduct[],
-    count: count || 0,
-    totalPages: Math.ceil((count || 0) / limit),
-  };
+  return { data: paged, count, totalPages };
 }
 
 /**
  * Crear producto
  */
 export async function createOpticalProduct(productData: Database["public"]["Tables"]["products"]["Insert"]) {
-  if (api.USE_PROXY_API) {
-    try {
-      const response = await fetch(`${api.getApiUrl()}/products`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await getAuthToken()}`,
-        },
-        body: JSON.stringify(productData),
-      });
+  const response = await fetch(`${getApiUrl()}/products`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await getAuthToken()}`,
+    },
+    body: JSON.stringify(productData),
+  });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `HTTP ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error creating product via API:", error);
-      throw error;
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  const { data, error } = await supabase.from("products").insert([productData]).select().single();
-  if (error) {
-    console.error("Error creating product in Supabase:", error);
-    throw error;
-  }
-  return data;
+  return await response.json();
 }
 
 /**
  * Actualizar producto
  */
 export async function updateOpticalProduct(productId: string, updates: Partial<OpticalProduct>) {
-  if (api.USE_PROXY_API) {
-    try {
-      const response = await fetch(`${api.getApiUrl()}/products/${productId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await getAuthToken()}`,
-        },
-        body: JSON.stringify(updates),
-      });
+  const response = await fetch(`${getApiUrl()}/products/${productId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${await getAuthToken()}`,
+    },
+    body: JSON.stringify(updates),
+  });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `HTTP ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error updating product via API:", error);
-      throw error;
-    }
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || `HTTP ${response.status}`);
   }
 
-  const { data, error } = await supabase.from("products").update(updates).eq("id", productId).select().single();
-  if (error) throw error;
-  return data;
+  return await response.json();
 }
 
 /**
  * Desactivar producto (marcar como reservado/vendido)
  */
-export async function deactivateProduct(productId: string, reason?: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .update({
-      is_active: false,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", productId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+export async function deactivateProduct(productId: string, _reason?: string) {
+  return await productsApi.update(productId, {
+    is_active: false,
+  });
 }
 
 /**
  * Reactivar producto
  */
 export async function reactivateProduct(productId: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .update({
-      is_active: true,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", productId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  return await productsApi.update(productId, {
+    is_active: true,
+  });
 }
 
 /**
  * Reactivar todos los productos de una orden
  */
 export async function reactivateOrderProducts(orderId: string) {
-  const { data: orderItems, error: itemsError } = await supabase.from("order_items").select("product_id").eq("order_id", orderId);
+  const order = await ordersApi.get(orderId);
 
-  if (itemsError) throw itemsError;
-
-  if (!orderItems || orderItems.length === 0) {
+  if (!order?.order_items || order.order_items.length === 0) {
     return;
   }
 
-  const productIds = orderItems.map((item) => item.product_id).filter((id): id is string => id !== null);
+  const productIds = order.order_items
+    .map((item) => item.product_id)
+    .filter((id): id is string => id !== null && id !== undefined);
 
-  const { error: reactivateError } = await supabase
-    .from("products")
-    .update({
-      is_active: true,
-      updated_at: new Date().toISOString(),
-    })
-    .in("id", productIds);
+  const results = await Promise.allSettled(
+    productIds.map((id) => productsApi.update(id, { is_active: true }))
+  );
 
-  if (reactivateError) throw reactivateError;
+  const failed = results.filter((r) => r.status === "rejected");
+  if (failed.length > 0) {
+    console.warn(`Failed to reactivate ${failed.length} products`);
+  }
 
   return productIds;
 }
@@ -341,37 +231,23 @@ export async function reactivateOrderProducts(orderId: string) {
  * Eliminar producto
  */
 export async function deleteOpticalProduct(productId: string) {
-  // Import images module to avoid circular dependency
   const { getProductImages, deleteProductImageFromStorage } = await import("@/services/admin/images");
-
-  if (api.USE_PROXY_API) {
-    try {
-      const response = await fetch(`${api.getApiUrl()}/products/${productId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await getAuthToken()}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || `HTTP ${response.status}`);
-      }
-
-      return { success: true };
-    } catch (error) {
-      console.error("Error deleting product via API:", error);
-      throw error;
-    }
-  }
 
   try {
     const images = await getProductImages(productId);
 
-    const { data, error } = await supabase.from("products").delete().eq("id", productId).select().single();
+    const response = await fetch(`${getApiUrl()}/products/${productId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await getAuthToken()}`,
+      },
+    });
 
-    if (error) throw error;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
 
     if (images && images.length > 0) {
       for (const image of images) {
@@ -385,7 +261,7 @@ export async function deleteOpticalProduct(productId: string) {
       }
     }
 
-    return data;
+    return { success: true };
   } catch (error) {
     console.error("Error eliminando producto:", error);
     throw error;

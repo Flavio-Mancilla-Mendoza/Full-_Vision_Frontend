@@ -48,12 +48,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
       <div className="flex items-center gap-2">
         <Label>Marca</Label>
-        <Select onValueChange={(v) => onBrandChange?.(v || undefined)} value={selectedBrandId || ""}>
+        <Select onValueChange={(v) => onBrandChange?.(v === "all" ? undefined : v)} value={selectedBrandId || "all"}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Todas" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
             {brands.map((b) => (
               <SelectItem key={b.id} value={b.id}>
                 {b.name}

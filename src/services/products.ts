@@ -46,8 +46,6 @@ export async function deleteProduct(id: string): Promise<{ message: string }> {
  * El Lambda Proxy los manejará apropiadamente
  */
 export async function searchProducts(searchTerm: string): Promise<Product[]> {
-  // Por ahora retorna todos y filtra en cliente
-  // TODO: Implementar query params en API Gateway
   const products = await productsApi.list();
   return products.filter(
     (p) => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,7 +56,6 @@ export async function searchProducts(searchTerm: string): Promise<Product[]> {
  * Obtener productos por categoría
  */
 export async function getProductsByCategory(categoryId: string): Promise<Product[]> {
-  // TODO: Agregar query param category_id al API Gateway
   const products = await productsApi.list();
   return products.filter((p) => p.category_id === categoryId);
 }
@@ -67,7 +64,6 @@ export async function getProductsByCategory(categoryId: string): Promise<Product
  * Obtener productos por marca
  */
 export async function getProductsByBrand(brandId: string): Promise<Product[]> {
-  // TODO: Agregar query param brand_id al API Gateway
   const products = await productsApi.list();
   return products.filter((p) => p.brand_id === brandId);
 }
@@ -76,7 +72,6 @@ export async function getProductsByBrand(brandId: string): Promise<Product[]> {
  * Obtener productos destacados
  */
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  // TODO: Agregar query param featured=true al API Gateway
   const products = await productsApi.list();
   return products.filter((p) => p.is_featured).slice(0, limit);
 }

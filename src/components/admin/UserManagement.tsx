@@ -54,12 +54,14 @@ function UserManagementInner() {
   const [showAdminConfirm, setShowAdminConfirm] = useState(false);
   const { isSubmitting, submitForm, handleDelete } = useUserManagement();
 
-  // Volcar pagedUsers en el estado local para validaciones de formulario
+  // Sync paged data into local state for form validations
   useEffect(() => {
-    setUsers(pagedUsers);
-  }, [pagedUsers]);
+    if (pagedUsers.length > 0 || !isUsersLoading) {
+      setUsers(pagedUsers);
+    }
+  }, [pagedUsers, isUsersLoading]);
 
-  // Sincronizar estado de carga
+  // Sync loading state
   useEffect(() => {
     setLoading(isUsersLoading);
   }, [isUsersLoading]);

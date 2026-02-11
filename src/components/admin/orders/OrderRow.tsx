@@ -2,23 +2,12 @@ import React from "react";
 import { TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { OrderActions } from "./OrderActions";
+import { getOrderStatusConfig } from "@/lib/order-utils";
 import type { Order } from "@/types";
 
 function getStatusBadge(status: string) {
-  const variants: Record<string, { variant: "default" | "destructive" | "outline" | "secondary"; label: string }> = {
-    pending: { variant: "secondary", label: "Pendiente" },
-    confirmed: { variant: "default", label: "Confirmado" },
-    processing: { variant: "default", label: "Procesando" },
-    ready_for_pickup: { variant: "default", label: "Listo para Recojo" },
-    shipped: { variant: "default", label: "Enviado" },
-    delivered: { variant: "default", label: "Entregado" },
-    cancelled: { variant: "destructive", label: "Cancelado" },
-  };
-  return variants[status] ? (
-    <Badge variant={variants[status].variant}>{variants[status].label}</Badge>
-  ) : (
-    <Badge variant="secondary">{status}</Badge>
-  );
+  const config = getOrderStatusConfig(status);
+  return <Badge variant={config.variant}>{config.label}</Badge>;
 }
 
 export const OrderRow: React.FC<{ order: Order; onView: (order: Order) => void }> = ({ order, onView }) => {

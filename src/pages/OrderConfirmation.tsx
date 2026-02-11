@@ -137,12 +137,12 @@ export default function OrderConfirmation() {
               </div>
               <div className="flex justify-between text-sm">
                 <span>IGV (18%)</span>
-                <span>S/ {order.tax_amount.toFixed(2)}</span>
+                <span>S/ {(order.tax_amount ?? 0).toFixed(2)}</span>
               </div>
               {order.shipping_address && (
                 <div className="flex justify-between text-sm">
                   <span>Envío</span>
-                  <span>{order.shipping_amount === 0 ? "GRATIS" : `S/ ${order.shipping_amount.toFixed(2)}`}</span>
+                  <span>{!order.shipping_amount ? "GRATIS" : `S/ ${order.shipping_amount.toFixed(2)}`}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t">

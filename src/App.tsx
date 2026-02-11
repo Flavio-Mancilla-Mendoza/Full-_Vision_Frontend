@@ -2,7 +2,7 @@ import { useEffect, lazy, Suspense, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,12 +11,21 @@ import AuthRequired from "./components/auth/AuthRequired";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useGoogleAnalytics } from "@/hooks/useGoogleAnalytics";
 
+// Scroll to top on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
 // Performance monitoring - lazy load solo en desarrollo
 const WebVitalsDebugger = lazy(() => import("@/components/common/WebVitalsDebugger"));
 const PWAInstallPrompt = lazy(() => import("@/components/common/PWAInstallPrompt"));
 
-// Páginas críticas - carga inmediata
-const Index = lazy(() => import("./pages/Index"));
+// Página principal - carga eager para LCP
+import Index from "./pages/Index";
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Health = lazy(() => import("./pages/Health"));
 const Login = lazy(() => import("./pages/Login"));
@@ -229,6 +238,7 @@ const App = () => {
               v7_relativeSplatPath: true,
             }}
           >
+            <ScrollToTop />
             <AppRoutes />
 
             {/* Componentes opcionales - lazy load */}

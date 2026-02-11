@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,26 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
-import { useUser, useSession, getProfile } from "@/hooks/useAuthCognito";
-import { supabase } from "@/lib/supabase";
+import { useUser } from "@/hooks/useAuthCognito";
+import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Phone, MapPin, Calendar, LogOut, Eye, Home } from "lucide-react";
-
-interface UserProfile {
-  id: string;
-  full_name: string | null;
-  role: "admin" | "customer";
-  email?: string;
-  phone?: string;
-  address?: string;
-  created_at?: string;
-}
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
     full_name: "",
@@ -34,146 +21,71 @@ const Profile = () => {
     address: "",
   });
 
-  const { user: currentUser, session: userSession, loading: authLoading, isAuthenticated, refreshProfile } = useUser();
-  const { session: directSession, loading: sessionLoading } = useSession();
-  const { toast } = useToast();
+  const { user: currentUser, loading: authLoading, isAuthenticated } = useUser();
+  const { data: profile, isLoading: profileLoading, isError } = useProfile();
+  const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Usar la sesión directa como fallback
-  const session = userSession || directSession;
-
-  const loadProfile = useCallback(async () => {
-    if (!isAuthenticated || !currentUser) return;
-
-    try {
-      setLoading(true);
-      // Si ya tenemos datos del usuario desde useUser, usarlos
-      setProfile({
-        ...currentUser,
-        email: session?.user?.email,
-      });
-      setFormData({
-        full_name: currentUser.full_name || "",
-        phone: currentUser.phone || "",
-        address: currentUser.address || "",
-      });
-    } catch (error) {
-      console.error("Error loading profile:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el perfil",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUser, session?.user?.email, toast, isAuthenticated]);
-
+  // Redirect si no está autenticado
   useEffect(() => {
-    // No redirigir mientras está cargando cualquiera de las dos sesiones
-    if (authLoading || sessionLoading) {
-      return;
-    }
-
-    // Verificar directamente la sesión
-    if (!session) {
+    if (!authLoading && !isAuthenticated) {
       navigate("/login");
-      return;
     }
+  }, [authLoading, isAuthenticated, navigate]);
 
-    // Si tenemos sesión, cargar el perfil cuando tengamos datos del usuario
-    if (currentUser) {
-      loadProfile();
-      setEditing(false); // Siempre inicia en modo solo lectura
-    }
-  }, [session, userSession, directSession, navigate, loadProfile, authLoading, sessionLoading, currentUser, isAuthenticated]);
-
-  const updateProfile = async () => {
-    if (!session?.user?.id) return;
-
-    try {
-      setUpdating(true);
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: formData.full_name || null,
-          phone: formData.phone || null,
-          address: formData.address || null,
-        })
-        .eq("id", session.user.id);
-
-      if (error) throw error;
-
-      // ✅ Invalidar caché y refrescar datos del usuario
-      if (refreshProfile) {
-        refreshProfile();
-      }
-
-      // Actualizar estado local también
-      setProfile((prev) =>
-        prev
-          ? {
-              ...prev,
-              full_name: formData.full_name || null,
-              phone: formData.phone || null,
-              address: formData.address || null,
-            }
-          : null
-      );
-
-      setEditing(false); // Salir del modo edición
-
-      toast({
-        title: "Perfil actualizado",
-        description: "Los cambios se guardaron correctamente",
+  // Sincronizar form con datos del perfil
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        address: typeof profile.address === "string" ? profile.address : "",
       });
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: error?.message || JSON.stringify(error) || "No se pudo actualizar el perfil",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdating(false);
+      setEditing(false);
     }
+  }, [profile]);
+
+  const handleSave = () => {
+    updateProfile.mutate(
+      {
+        full_name: formData.full_name || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address ? { street: formData.address } : undefined,
+      },
+      { onSuccess: () => setEditing(false) }
+    );
+  };
+
+  const handleCancel = () => {
+    if (profile) {
+      setFormData({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        address: typeof profile.address === "string" ? profile.address : "",
+      });
+    }
+    setEditing(false);
   };
 
   const handleSignOut = async () => {
     try {
       const { logoutUser } = await import("@/services/cognito-auth");
       const result = await logoutUser();
-
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-
+      if (!result.success) throw new Error(result.error);
       navigate("/");
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
-      });
+      toast({ title: "Sesión cerrada", description: "Has cerrado sesión correctamente" });
     } catch (error) {
-      console.error("Error signing out:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo cerrar la sesión",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "No se pudo cerrar la sesión", variant: "destructive" });
     }
   };
 
-  const getInitials = (name: string | null) => {
+  const getInitials = (name: string | null | undefined) => {
     if (!name) return "U";
-    return name
-      .split(" ")
-      .map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((w) => w.charAt(0)).join("").toUpperCase().slice(0, 2);
   };
 
-  if (authLoading || loading) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-background py-8">
         <div className="container mx-auto px-4 max-w-4xl">
@@ -201,7 +113,7 @@ const Profile = () => {
     );
   }
 
-  if (!profile) {
+  if (isError || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Card className="w-full max-w-md">
@@ -252,14 +164,14 @@ const Profile = () => {
                   </div>
                   <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
                     <Mail className="h-4 w-4" />
-                    <span>{profile.email}</span>
+                    <span>{profile.email || currentUser?.email}</span>
                   </div>
                 </div>
               </div>
             </CardHeader>
           </Card>
 
-          {/* Edit Profile - modo solo lectura y edición */}
+          {/* Edit Profile */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -284,7 +196,7 @@ const Profile = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={profile.email || ""} disabled className="bg-muted" />
+                  <Input id="email" value={profile.email || currentUser?.email || ""} disabled className="bg-muted" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">Teléfono</Label>
@@ -309,7 +221,7 @@ const Profile = () => {
                       placeholder="Dirección completa"
                     />
                   ) : (
-                    <Input id="address" value={profile.address || ""} disabled className="bg-muted" />
+                    <Input id="address" value={typeof profile.address === "string" ? profile.address : ""} disabled className="bg-muted" />
                   )}
                 </div>
               </div>
@@ -319,23 +231,11 @@ const Profile = () => {
               <div className="flex justify-end gap-2">
                 {editing ? (
                   <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        loadProfile();
-                        setEditing(false);
-                      }}
-                    >
+                    <Button variant="outline" onClick={handleCancel}>
                       Cancelar
                     </Button>
-                    <Button
-                      onClick={async () => {
-                        await updateProfile();
-                        setEditing(false);
-                      }}
-                      disabled={updating}
-                    >
-                      {updating ? "Guardando..." : "Guardar Cambios"}
+                    <Button onClick={handleSave} disabled={updateProfile.isPending}>
+                      {updateProfile.isPending ? "Guardando..." : "Guardar Cambios"}
                     </Button>
                   </>
                 ) : (

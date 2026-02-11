@@ -30,8 +30,10 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 const ALLOWED_ORIGINS = [
   "http://localhost:8080",
+  "http://localhost:8081",
   "http://localhost:5173",
   "https://full-vision.vercel.app",
+  "https://full-vision-react.vercel.app",
 ];
 
 // ================================================================
@@ -39,7 +41,8 @@ const ALLOWED_ORIGINS = [
 // ================================================================
 
 function getCorsHeaders(origin) {
-  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : "*";
+  // NUNCA usar '*' con Access-Control-Allow-Credentials: true (los navegadores lo rechazan).
+  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowOrigin,

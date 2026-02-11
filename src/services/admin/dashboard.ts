@@ -1,5 +1,6 @@
 // src/services/admin/dashboard.ts - Estadísticas del dashboard (Admin)
-import { supabase } from "@/lib/supabase";
+import { getApiUrl } from "@/services/api";
+import { getAuthToken } from "./helpers";
 
 export interface DashboardStats {
   totalUsers: number;
@@ -22,40 +23,23 @@ export interface DashboardStats {
  * Obtener estadísticas completas del dashboard
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const [users, products, orders, appointments, locations, recentOrders, recentAppointments] = await Promise.all([
-    supabase.from("profiles").select("id, is_active", { count: "exact" }),
-    supabase.from("products").select("id", { count: "exact" }),
-    supabase.from("orders").select("id, total_amount", { count: "exact" }),
-    supabase.from("eye_exam_appointments").select("id", { count: "exact" }),
-    supabase.from("eye_exam_locations").select("id", { count: "exact" }),
-    supabase
-      .from("orders")
-      .select("id, total_amount")
-      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-    supabase
-      .from("eye_exam_appointments")
-      .select("id")
-      .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
-  ]);
+  const token = await getAuthToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
 
-  const totalRevenue = orders.data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
-  const averageOrderValue = orders.count ? totalRevenue / orders.count : 0;
-  const activeUsers = users.data?.filter((user) => user.is_active).length || 0;
+  const response = await fetch(`${getApiUrl()}/admin/dashboard/stats`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
 
-  return {
-    totalUsers: users.count || 0,
-    totalProducts: products.count || 0,
-    totalOrders: orders.count || 0,
-    totalAppointments: appointments.count || 0,
-    totalLocations: locations.count || 0,
-    recentOrders: recentOrders.data?.length || 0,
-    recentAppointments: recentAppointments.data?.length || 0,
-    activeUsers,
-    totalRevenue,
-    averageOrderValue,
-    productsByCategory: [],
-    ordersByStatus: [],
-    appointmentsByStatus: [],
-    topSellingProducts: [],
-  };
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to fetch dashboard stats");
+  }
+
+  return await response.json();
 }

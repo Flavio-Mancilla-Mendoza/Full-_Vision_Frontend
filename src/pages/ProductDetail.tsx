@@ -3,7 +3,7 @@
  * Muestra imagen, nombre, marca, precio, SKU y promociones
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,21 +16,26 @@ import {
   Check,
   ShoppingCart,
   Store,
-  ChevronLeft,
-  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import { useProductDetail } from "@/hooks/useProductDetail";
 import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
-import { transformProductForCart } from "@/lib/product-utils";
+import {
+  transformProductForCart,
+  calculateFinalPrice,
+  hasProductDiscount,
+  calculateDiscountPercentage,
+  getSortedProductImages,
+  buildProductTitle,
+  GENDER_LABELS,
+  GENDER_PATHS,
+} from "@/lib/product-utils";
 import { formatCurrency } from "@/lib/utils";
-import { ProductImage } from "@/components/ui/optimized-image";
 import SEO from "@/components/common/SEO";
-import type { OpticalProduct } from "@/types";
+import { ImageGallery, ProductSpecs, ProductFeatures } from "@/components/products/product-detail";
 
 const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const {
     data: product,
@@ -77,86 +82,33 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Calcular precios
-  let finalPrice = product.base_price;
-  if (product.sale_price && product.sale_price > 0) {
-    finalPrice = product.sale_price;
-  } else if (
-    product.discount_percentage &&
-    product.discount_percentage > 0
-  ) {
-    finalPrice =
-      product.base_price * (1 - product.discount_percentage / 100);
-  }
+  // Precios (lógica centralizada)
+  const finalPrice = calculateFinalPrice(product);
+  const hasDiscount = hasProductDiscount(product);
+  const discountPct = calculateDiscountPercentage(product);
 
-  const hasDiscount = Boolean(
-    (product.sale_price &&
-      product.sale_price > 0 &&
-      product.sale_price < product.base_price) ||
-      (product.discount_percentage && product.discount_percentage > 0)
-  );
-
-  const discountPercentage =
-    product.sale_price &&
-    product.sale_price > 0 &&
-    product.sale_price < product.base_price
-      ? Math.round(
-          ((product.base_price - product.sale_price) / product.base_price) *
-            100
-        )
-      : product.discount_percentage && product.discount_percentage > 0
-      ? product.discount_percentage
-      : 0;
-
-  // Imágenes
-  const images =
-    product.product_images && product.product_images.length > 0
-      ? product.product_images.sort((a, b) => a.sort_order - b.sort_order)
-      : [{ id: "main", url: product.image_url || "", alt_text: product.name, is_primary: true, sort_order: 0, s3_key: "" }];
-
-  const currentImage = images[selectedImageIndex];
+  // Imágenes ordenadas
+  const images = getSortedProductImages(product);
 
   // Carrito
-  const isInCart = cartItems.some(
-    (item) => item.product_id === product.id
-  );
+  const isInCart = cartItems.some((item) => item.product_id === product.id);
   const cartQuantity =
     cartItems.find((item) => item.product_id === product.id)?.quantity || 0;
 
   const handleAddToCart = () => {
-    const opticalProduct = transformProductForCart(product as unknown as OpticalProduct);
+    const cartProduct = transformProductForCart(product);
     addToCart({
       productId: product.id,
       quantity: 1,
-      product: opticalProduct as unknown as Parameters<typeof addToCart>[0]["product"],
+      product: cartProduct as Parameters<typeof addToCart>[0]["product"],
     });
   };
 
-  // Determinar breadcrumb según género
-  const genderLabel =
-    product.gender === "hombre"
-      ? "Lentes para Hombre"
-      : product.gender === "mujer"
-      ? "Lentes para Mujer"
-      : product.gender === "niños"
-      ? "Lentes para Niños"
-      : "Productos";
+  // Breadcrumb
+  const genderLabel = (product.gender && GENDER_LABELS[product.gender]) || "Productos";
+  const genderPath = (product.gender && GENDER_PATHS[product.gender]) || "/";
 
-  const genderPath =
-    product.gender === "hombre"
-      ? "/hombres"
-      : product.gender === "mujer"
-      ? "/mujer"
-      : product.gender === "niños"
-      ? "/ninos"
-      : "/";
-
-  // Lens type label
-  const lensTypeLabel = product.lens_type
-    ? `LENTE DE ${product.lens_type.toUpperCase()}`
-    : "LENTE";
-
-  const productTitle = `${lensTypeLabel} ${product.brand?.name ? product.brand.name.toUpperCase() : ""} ${product.name}`.trim();
+  const productTitle = buildProductTitle(product);
 
   return (
     <>
@@ -194,70 +146,7 @@ const ProductDetailPage: React.FC = () => {
         {/* Main content: image + info */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
           {/* Left: Image gallery */}
-          <div className="space-y-4">
-            {/* Main image */}
-            <div className="relative bg-white rounded-lg overflow-hidden aspect-square flex items-center justify-center border">
-              <ProductImage
-                src={currentImage.url || "/placeholder-glasses.jpg"}
-                alt={currentImage.alt_text || product.name}
-                width={600}
-                height={600}
-                className="w-full h-full object-contain p-8"
-                priority={true}
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                quality={90}
-              />
-
-              {/* Navigation arrows for multiple images */}
-              {images.length > 1 && (
-                <>
-                  <button
-                    onClick={() =>
-                      setSelectedImageIndex((i) =>
-                        i === 0 ? images.length - 1 : i - 1
-                      )
-                    }
-                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 shadow-md transition-colors"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() =>
-                      setSelectedImageIndex((i) =>
-                        i === images.length - 1 ? 0 : i + 1
-                      )
-                    }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 shadow-md transition-colors"
-                  >
-                    <ChevronRightIcon className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {images.map((img, index) => (
-                  <button
-                    key={img.id}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 transition-colors ${
-                      index === selectedImageIndex
-                        ? "border-primary"
-                        : "border-border hover:border-muted-foreground"
-                    }`}
-                  >
-                    <img
-                      src={img.url || "/placeholder-glasses.jpg"}
-                      alt={img.alt_text || `Vista ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ImageGallery images={images} productName={product.name} />
 
           {/* Right: Product info */}
           <div className="space-y-6">
@@ -282,9 +171,9 @@ const ProductDetailPage: React.FC = () => {
                 <span className="text-3xl lg:text-4xl font-bold">
                   {formatCurrency(finalPrice)}
                 </span>
-                {hasDiscount && discountPercentage > 0 && (
+                {hasDiscount && discountPct > 0 && (
                   <Badge className="bg-destructive text-destructive-foreground text-sm px-3 py-1">
-                    {Math.round(discountPercentage)}% OFF
+                    {Math.round(discountPct)}% OFF
                   </Badge>
                 )}
               </div>
@@ -322,88 +211,24 @@ const ProductDetailPage: React.FC = () => {
             <Separator />
 
             {/* Product specs */}
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {product.frame_material && (
-                <div>
-                  <span className="text-muted-foreground">Material</span>
-                  <p className="font-medium capitalize">
-                    {product.frame_material}
-                  </p>
-                </div>
-              )}
-              {product.frame_style && (
-                <div>
-                  <span className="text-muted-foreground">Estilo</span>
-                  <p className="font-medium capitalize">
-                    {product.frame_style}
-                  </p>
-                </div>
-              )}
-              {product.frame_size && (
-                <div>
-                  <span className="text-muted-foreground">Talla</span>
-                  <p className="font-medium uppercase">{product.frame_size}</p>
-                </div>
-              )}
-              {product.frame_color && (
-                <div>
-                  <span className="text-muted-foreground">Color</span>
-                  <p className="font-medium capitalize">
-                    {product.frame_color}
-                  </p>
-                </div>
-              )}
-              {product.lens_color && (
-                <div>
-                  <span className="text-muted-foreground">Color lente</span>
-                  <p className="font-medium capitalize">
-                    {product.lens_color}
-                  </p>
-                </div>
-              )}
-              {product.bridge_width && (
-                <div>
-                  <span className="text-muted-foreground">Puente</span>
-                  <p className="font-medium">{product.bridge_width}mm</p>
-                </div>
-              )}
-              {product.temple_length && (
-                <div>
-                  <span className="text-muted-foreground">Patilla</span>
-                  <p className="font-medium">{product.temple_length}mm</p>
-                </div>
-              )}
-              {product.lens_width && (
-                <div>
-                  <span className="text-muted-foreground">Lente</span>
-                  <p className="font-medium">{product.lens_width}mm</p>
-                </div>
-              )}
-            </div>
+            <ProductSpecs
+              frame_material={product.frame_material}
+              frame_style={product.frame_style}
+              frame_size={product.frame_size}
+              frame_color={product.frame_color}
+              lens_color={product.lens_color}
+              bridge_width={product.bridge_width}
+              temple_length={product.temple_length}
+              lens_width={product.lens_width}
+            />
 
             {/* Features badges */}
-            <div className="flex flex-wrap gap-2">
-              {product.has_uv_protection && (
-                <Badge variant="outline" className="gap-1">
-                  <Check className="h-3 w-3" /> Protección UV
-                </Badge>
-              )}
-              {product.has_blue_filter && (
-                <Badge variant="outline" className="gap-1">
-                  <Check className="h-3 w-3" /> Filtro Azul
-                </Badge>
-              )}
-              {product.is_photochromic && (
-                <Badge variant="outline" className="gap-1">
-                  <Check className="h-3 w-3" /> Fotocromático
-                </Badge>
-              )}
-              {product.has_anti_reflective && (
-                <Badge variant="outline" className="gap-1">
-                  <Check className="h-3 w-3" /> Antirreflejo
-                </Badge>
-              )}
-            </div>
+            <ProductFeatures
+              has_uv_protection={product.has_uv_protection}
+              has_blue_filter={product.has_blue_filter}
+              is_photochromic={product.is_photochromic}
+              has_anti_reflective={product.has_anti_reflective}
+            />
 
             <Separator />
 

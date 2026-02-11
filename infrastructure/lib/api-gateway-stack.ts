@@ -168,6 +168,7 @@ export class ApiGatewayStack extends cdk.Stack {
           "http://localhost:8081",
           "http://localhost:5173",
           "https://full-vision.vercel.app",
+          "https://full-vision-react.vercel.app",
         ],
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
@@ -220,11 +221,12 @@ export class ApiGatewayStack extends cdk.Stack {
     // ================================================================
     // Lambda Integrations
     // ================================================================
-    const publicIntegration = new apigateway.LambdaIntegration(this.supabasePublicFunction, { proxy: true });
-    const productsIntegration = new apigateway.LambdaIntegration(this.supabaseProductsFunction, { proxy: true });
-    const uploadsIntegration = new apigateway.LambdaIntegration(this.supabaseUploadsFunction, { proxy: true });
-    const appointmentsIntegration = new apigateway.LambdaIntegration(this.appointmentsFunction, { proxy: true });
-    const adminUsersIntegration = new apigateway.LambdaIntegration(this.adminUserManagementFunction, { proxy: true });
+    // allowTestInvoke: false reduces Lambda resource policy size (20KB limit)
+    const publicIntegration = new apigateway.LambdaIntegration(this.supabasePublicFunction, { proxy: true, allowTestInvoke: false });
+    const productsIntegration = new apigateway.LambdaIntegration(this.supabaseProductsFunction, { proxy: true, allowTestInvoke: false });
+    const uploadsIntegration = new apigateway.LambdaIntegration(this.supabaseUploadsFunction, { proxy: true, allowTestInvoke: false });
+    const appointmentsIntegration = new apigateway.LambdaIntegration(this.appointmentsFunction, { proxy: true, allowTestInvoke: false });
+    const adminUsersIntegration = new apigateway.LambdaIntegration(this.adminUserManagementFunction, { proxy: true, allowTestInvoke: false });
 
     // Helper for authorized methods
     const authOptions = {
@@ -381,9 +383,26 @@ export class ApiGatewayStack extends cdk.Stack {
     appointmentById.addMethod("PUT", appointmentsIntegration, authOptions);
 
     // ================================================================
-    // ADMIN USERS ROUTES (/admin/users/*) - NEW
+    // ADMIN ROUTES (/admin/*)
     // ================================================================
     const adminResource = this.api.root.addResource("admin");
+
+    // /admin/dashboard/stats - handled by supabase-products Lambda (dashboard handler)
+    const adminDashboard = adminResource.addResource("dashboard");
+    const adminDashboardStats = adminDashboard.addResource("stats");
+    adminDashboardStats.addMethod("GET", productsIntegration, authOptions);
+
+    // /admin/site-content - handled by supabase-products Lambda (site-content handler)
+    // Uses {proxy+} to minimize Lambda permission count (policy size limit)
+    const adminSiteContent = adminResource.addResource("site-content");
+    adminSiteContent.addMethod("GET", productsIntegration, authOptions);
+    const adminSiteContentProxy = adminSiteContent.addProxy({
+      defaultIntegration: productsIntegration,
+      defaultMethodOptions: authOptions,
+      anyMethod: true,
+    });
+
+    // /admin/users/*
     const adminUsersResource = adminResource.addResource("users");
     adminUsersResource.addMethod("GET", adminUsersIntegration, authOptions);
     adminUsersResource.addMethod("POST", adminUsersIntegration, authOptions);
@@ -400,6 +419,35 @@ export class ApiGatewayStack extends cdk.Stack {
     // /admin/users/{userId}/enable
     const adminUserEnable = adminUserById.addResource("enable");
     adminUserEnable.addMethod("PUT", adminUsersIntegration, authOptions);
+
+    // /admin/profiles - Admin profile management (handled by supabase-products)
+    const adminProfiles = adminResource.addResource("profiles");
+    adminProfiles.addMethod("GET", productsIntegration, authOptions);
+    adminProfiles.addMethod("POST", productsIntegration, authOptions);
+
+    // /admin/profiles/{profileId}
+    const adminProfileById = adminProfiles.addResource("{profileId}");
+    adminProfileById.addMethod("PUT", productsIntegration, authOptions);
+
+    // /admin/product-images - Admin product image record management
+    const adminProductImages = adminResource.addResource("product-images");
+    adminProductImages.addMethod("GET", productsIntegration, authOptions);
+    adminProductImages.addMethod("POST", productsIntegration, authOptions);
+
+    // /admin/product-images/primary
+    const adminProductImagePrimary = adminProductImages.addResource("primary");
+    adminProductImagePrimary.addMethod("PUT", productsIntegration, authOptions);
+
+    // /admin/product-images/{imageId}
+    const adminProductImageById = adminProductImages.addResource("{imageId}");
+    adminProductImageById.addMethod("PUT", productsIntegration, authOptions);
+    adminProductImageById.addMethod("DELETE", productsIntegration, authOptions);
+
+    // ================================================================
+    // CATEGORIES ROUTE (/categories)
+    // ================================================================
+    const categoriesResource = this.api.root.addResource("categories");
+    categoriesResource.addMethod("GET", productsIntegration, authOptions);
 
     // ================================================================
     // Outputs

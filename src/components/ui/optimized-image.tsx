@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
-import { useInView } from "react-intersection-observer";
 import { cn } from "@/lib/utils";
-import { generateOptimizedUrl, generateSrcSet } from "@/hooks/use-image-optimization";
+import { generateOptimizedUrl } from "@/hooks/use-image-optimization";
 
 interface OptimizedImageProps {
   src: string;
@@ -34,108 +33,71 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isError, setIsError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Hook para detectar cuando la imagen entra en el viewport
-  const { ref: inViewRef, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: true,
-    skip: priority, // Si es priority, no usar lazy loading
-    rootMargin: "50px", // Cargar un poco antes de que sea visible
-  });
-
-  // Combinar refs
-  const setRefs = useCallback(
-    (element: HTMLImageElement | null) => {
-      imgRef.current = element;
-      inViewRef(element);
-    },
-    [inViewRef]
-  );
-
-  // Generar URL optimizada una vez
+  // Generar URL optimizada
   const optimizedSrc = React.useMemo(() => {
     return generateOptimizedUrl(src, width, quality);
   }, [src, width, quality]);
 
-  // Determinar si debemos mostrar la imagen
-  const shouldLoadImage = priority || inView;
-
-  // Manejar carga de imagen con callback optimizado
+  // Manejar carga de imagen
   const handleLoad = useCallback(() => {
     setIsLoaded(true);
     onLoad?.();
   }, [onLoad]);
 
-  // Manejar error de imagen con callback optimizado
+  // Manejar error: intentar sin query params, luego mostrar placeholder
   const handleError = useCallback(() => {
+    const img = imgRef.current;
+    if (img && !img.dataset.retried) {
+      img.dataset.retried = "true";
+      const fallbackUrl = optimizedSrc.split("?")[0];
+      if (fallbackUrl !== optimizedSrc) {
+        img.src = fallbackUrl;
+        return;
+      }
+    }
     setIsError(true);
     onError?.();
-  }, [onError]);
+  }, [onError, optimizedSrc]);
 
-  // Placeholder optimizado
-  const renderPlaceholder = () => {
-    if (placeholder === "empty") return null;
-
+  // Error state
+  if (isError) {
     return (
       <div
-        className={cn(
-          "absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200",
-          "flex items-center justify-center",
-          isLoaded ? "opacity-0" : "opacity-100",
-          "transition-opacity duration-300",
-          className
-        )}
+        className={cn("relative overflow-hidden bg-gray-100 flex items-center justify-center", className)}
         style={{ width, height }}
       >
-        <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
+        <div className="text-center text-gray-400">
+          <svg className="w-8 h-8 mx-auto mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.41a2.25 2.25 0 013.182 0l2.909 2.91M3.75 21h16.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3.75a1.5 1.5 0 00-1.5 1.5v14.25a1.5 1.5 0 001.5 1.5z" />
+          </svg>
+          <p className="text-xs">Sin imagen</p>
+        </div>
       </div>
     );
-  };
-
-  // Error state optimizado
-  const renderError = () => (
-    <div
-      className={cn("bg-gray-50 border border-gray-200 rounded-lg", "flex items-center justify-center text-gray-400 text-sm", className)}
-      style={{ width, height }}
-    >
-      <div className="text-center p-4">
-        <svg className="w-6 h-6 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <p className="text-xs">Error al cargar</p>
-      </div>
-    </div>
-  );
-
-  if (isError) {
-    return renderError();
   }
 
   return (
     <div className={cn("relative overflow-hidden", className)} style={{ width, height }}>
-      {/* Placeholder */}
-      {renderPlaceholder()}
-
-      {/* Imagen principal */}
-      {shouldLoadImage && (
-        <img
-          ref={setRefs}
-          src={optimizedSrc}
-          alt={alt}
-          width={width}
-          height={height}
-          sizes={sizes}
-          srcSet={generateSrcSet(optimizedSrc, width, quality)}
-          className={cn("transition-opacity duration-500 ease-out", isLoaded ? "opacity-100" : "opacity-0", className)}
-          onLoad={handleLoad}
-          onError={handleError}
-          loading={priority ? "eager" : "lazy"}
-          decoding="async"
-        />
+      {/* Placeholder spinner - se oculta cuando la imagen carga */}
+      {placeholder === "blur" && !isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transition-opacity duration-300">
+          <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin" />
+        </div>
       )}
+
+      {/* Imagen - siempre en el DOM, el browser maneja lazy loading nativo */}
+      <img
+        ref={imgRef}
+        src={optimizedSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={cn("transition-opacity duration-500 ease-out", isLoaded ? "opacity-100" : "opacity-0", className)}
+        onLoad={handleLoad}
+        onError={handleError}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+      />
     </div>
   );
 };

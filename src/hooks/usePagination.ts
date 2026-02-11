@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export type PagedResult<T> = {
@@ -32,12 +32,16 @@ export function usePagination<T, TFilters = Record<string, unknown>>(options: {
     refetchOnWindowFocus: false,
   });
 
-  const refresh = useCallback(() => query.refetch(), [query]);
+  // Keep a stable ref to query.refetch to avoid infinite re-renders
+  const refetchRef = useRef(query.refetch);
+  refetchRef.current = query.refetch;
+  const refresh = useCallback(() => refetchRef.current(), []);
 
   const result = query.data as PagedResult<T> | undefined;
+  const emptyArray = useMemo(() => [] as T[], []);
 
   return {
-    data: result?.data ?? ([] as T[]),
+    data: result?.data ?? emptyArray,
     total: result?.count ?? 0,
     totalPages: result?.totalPages ?? 1,
     page,

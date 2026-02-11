@@ -1,5 +1,5 @@
-// src/services/admin/appointments.ts - Gestión de citas (Admin)
-import { supabase } from "@/lib/supabase";
+// src/services/admin/appointments.ts - Gestión de citas (Admin) via API Gateway
+import { appointmentsApi } from "@/services/api";
 import type { ExamResults, PrescriptionDetails, DbLocation } from "@/types";
 
 export interface EyeExamAppointment {
@@ -38,20 +38,15 @@ export interface EyeExamAppointment {
  * Obtener todas las citas
  */
 export async function getAllEyeExamAppointments(): Promise<EyeExamAppointment[]> {
-  const { data, error } = await supabase
-    .from("eye_exam_appointments")
-    .select(`
-      *,
-      location:eye_exam_locations(*)
-    `)
-    .order("appointment_date", { ascending: false });
+  const data = await appointmentsApi.list();
 
-  if (error) throw error;
   return ((data || []).map((appointment) => ({
     ...appointment,
-    exam_type: appointment.exam_type as "comprehensive" | "basic" | "contact_lens" | "follow_up",
-    exam_results: appointment.exam_results as ExamResults,
-    prescription_issued: appointment.prescription_issued as PrescriptionDetails,
+    // Normalize the location join (lambda returns eye_exam_locations instead of location)
+    location: (appointment as Record<string, unknown>).eye_exam_locations || appointment.location || null,
+    exam_type: (appointment.exam_type || "comprehensive") as "comprehensive" | "basic" | "contact_lens" | "follow_up",
+    exam_results: (appointment as Record<string, unknown>).exam_results as ExamResults,
+    prescription_issued: (appointment as Record<string, unknown>).prescription_issued as PrescriptionDetails,
   }))) as unknown as EyeExamAppointment[];
 }
 
@@ -61,9 +56,7 @@ export async function getAllEyeExamAppointments(): Promise<EyeExamAppointment[]>
 export async function createEyeExamAppointment(
   appointmentData: Omit<EyeExamAppointment, "id" | "created_at" | "updated_at" | "location">
 ) {
-  const { data, error } = await supabase.from("eye_exam_appointments").insert([appointmentData]).select().single();
-
-  if (error) throw error;
+  const data = await appointmentsApi.create(appointmentData as Record<string, unknown>);
   return data;
 }
 
@@ -71,8 +64,6 @@ export async function createEyeExamAppointment(
  * Actualizar cita
  */
 export async function updateEyeExamAppointment(appointmentId: string, updates: Partial<EyeExamAppointment>) {
-  const { data, error } = await supabase.from("eye_exam_appointments").update(updates).eq("id", appointmentId).select().single();
-
-  if (error) throw error;
+  const data = await appointmentsApi.update(appointmentId, updates as Record<string, unknown>);
   return data;
 }

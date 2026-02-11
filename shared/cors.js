@@ -10,8 +10,9 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-    // Si el origin está en la lista permitida, usarlo; si no, usar *
-    const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : '*';
+    // Si el origin está en la lista permitida, usarlo; si no, usar el primero de la lista.
+    // NUNCA usar '*' con Access-Control-Allow-Credentials: true (los navegadores lo rechazan).
+    const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
     
     return { 
         'Content-Type': 'application/json', 

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { calculateFinalPrice, hasProductDiscount, calculateDiscountPercentage } from "@/lib/product-utils";
 import { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductImage } from "@/components/ui/optimized-image";
@@ -46,25 +47,10 @@ const ProductCardComponent = ({
 }: ProductCardProps) => {
   const navigate = useNavigate();
 
-  // Calcular precio final
-  let finalPrice = base_price;
-  if (sale_price && sale_price > 0) {
-    finalPrice = sale_price;
-  } else if (discount_percentage && discount_percentage > 0) {
-    finalPrice = base_price * (1 - discount_percentage / 100);
-  }
-
-  const hasDiscount = Boolean(
-    (sale_price && sale_price > 0 && sale_price < base_price) ||
-      (discount_percentage && discount_percentage > 0)
-  );
-
-  const discountPercentage =
-    sale_price && sale_price > 0 && sale_price < base_price
-      ? Math.round(((base_price - sale_price) / base_price) * 100)
-      : discount_percentage && discount_percentage > 0
-      ? discount_percentage
-      : 0;
+  // Precios (lógica centralizada)
+  const finalPrice = calculateFinalPrice({ base_price, sale_price, discount_percentage });
+  const hasDiscount = hasProductDiscount({ base_price, sale_price, discount_percentage });
+  const discountPct = calculateDiscountPercentage({ base_price, sale_price, discount_percentage: discount_percentage ?? undefined });
 
   const productImage = image_url || "/placeholder-glasses.jpg";
 
@@ -97,9 +83,9 @@ const ProductCardComponent = ({
           />
 
           {/* Badge de descuento */}
-          {hasDiscount && discountPercentage > 0 && (
+          {hasDiscount && discountPct > 0 && (
             <Badge className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5">
-              {Math.round(discountPercentage)}% OFF
+              {Math.round(discountPct)}% OFF
             </Badge>
           )}
         </div>

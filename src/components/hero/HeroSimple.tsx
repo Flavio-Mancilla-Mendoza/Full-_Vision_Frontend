@@ -17,65 +17,53 @@ const HeroSimple = memo(() => {
   const navigate = useNavigate();
   const { heroImage, heroTitle, heroSubtitle, heroImageAlt } = useHeroContent();
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imagePreloaded, setImagePreloaded] = useState(false);
 
   // Usar contenido dinámico de la base de datos
   const finalHeroTitle = heroTitle || STATIC_HERO_CONTENT.title;
   const finalHeroSubtitle = heroSubtitle || STATIC_HERO_CONTENT.subtitle;
   const finalHeroImageAlt = heroImageAlt || STATIC_HERO_CONTENT.alt;
 
-  // Precargar imagen crítica del hero antes de renderizar
+  // Cache hero image URL for instant render on repeat visits
   useEffect(() => {
     if (heroImage) {
-      const img = new Image();
-      img.src = heroImage;
-      img.onload = () => {
-        setImagePreloaded(true);
-        setImageLoaded(true);
-      };
-      img.onerror = () => {
-        setImagePreloaded(true); // Mostrar fallback si hay error
-      };
+      try { localStorage.setItem('hero_image_url', heroImage); } catch {}
     }
   }, [heroImage]);
+
+  // Use cached URL for immediate render while API loads
+  const displayImage = heroImage || (() => {
+    try { return localStorage.getItem('hero_image_url'); } catch { return null; }
+  })();
 
   return (
     <section className="relative w-full h-[500px] md:h-[600px] lg:h-[650px] overflow-hidden">
       {/* Background con gradiente o imagen desde la base de datos */}
       <div className="absolute inset-0">
-        {heroImage ? (
+        {displayImage ? (
           <>
-            {/* Skeleton/Placeholder mientras carga - Mejora visual */}
+            {/* Skeleton/Placeholder mientras carga */}
             {!imageLoaded && (
               <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-primary/20 to-accent/30">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/30 to-primary/60 animate-pulse" />
-                {/* Shimmer effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
               </div>
             )}
 
-            {/* Imagen real desde la base de datos - con mejor manejo de carga */}
-            {imagePreloaded && (
-              <div className="w-full h-full relative">
-                <img
-                  src={heroImage}
-                  alt={finalHeroImageAlt}
-                  className={`w-full h-full object-cover object-top transition-opacity duration-500 will-change-opacity ${
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  }`}
-                  {...{ fetchpriority: "high" }}
-                  decoding="async"
-                  onLoad={() => setImageLoaded(true)}
-                  style={{
-                    contentVisibility: "auto",
-                  }}
-                />
-              </div>
-            )}
+            {/* Imagen hero - render inmediato para LCP óptimo */}
+            <div className="w-full h-full relative">
+              <img
+                src={displayImage}
+                alt={finalHeroImageAlt}
+                className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+                {...{ fetchpriority: "high" }}
+                decoding="sync"
+                onLoad={() => setImageLoaded(true)}
+              />
+            </div>
             <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/30 to-primary/60" />
           </>
         ) : (
-          // Gradiente por defecto si no hay imagen en la base de datos
           <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-accent">
             <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/30 to-primary/60" />
           </div>

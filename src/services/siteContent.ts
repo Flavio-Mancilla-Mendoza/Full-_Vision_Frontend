@@ -1,6 +1,6 @@
 // src/services/siteContent.ts
-import { supabase } from "@/lib/supabase";
 import api from "@/services/api";
+import { getAuthToken } from "@/services/admin/helpers";
 import { DbSiteContent, Json } from "@/types";
 
 // Exportar el tipo directamente desde Supabase
@@ -78,62 +78,82 @@ export async function getAllSiteContent(): Promise<SiteContent[]> {
   }
 }
 
-// ==================== GESTIÓN ADMIN ====================
-
-// Crear nuevo contenido
-export async function createSiteContent(content: Omit<SiteContent, "id" | "created_at" | "updated_at">): Promise<SiteContent> {
-  const { data, error } = await supabase.from("site_content").insert([content]).select().single();
-
-  if (error) throw error;
-  return data;
-}
+// ==================== GESTIÓN ADMIN (via API Gateway) ====================
 
 // Actualizar contenido existente
 export async function updateSiteContent(id: string, updates: ContentUpdateData): Promise<SiteContent> {
-  const { data, error } = await supabase
-    .from("site_content")
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+  const token = await getAuthToken();
+  if (!token) throw new Error("Authentication required");
 
-  if (error) throw error;
-  return data;
-}
-
-// Eliminar contenido
-export async function deleteSiteContent(id: string): Promise<void> {
-  const { error } = await supabase.from("site_content").delete().eq("id", id);
-
-  if (error) throw error;
-}
-
-// ==================== UPLOAD DE IMÁGENES ====================
-
-export async function uploadSiteImage(file: File, folder: string = "general"): Promise<string> {
-  const fileExt = file.name.split(".").pop();
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-
-  const { data, error } = await supabase.storage.from("site-content").upload(fileName, file, {
-    cacheControl: "3600",
-    upsert: false,
+  const response = await fetch(`${api.getApiUrl()}/admin/site-content/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(updates),
   });
 
-  if (error) throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to update site content");
+  }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("site-content").getPublicUrl(data.path);
+  return await response.json();
+}
 
-  return publicUrl;
+// ==================== UPLOAD DE IMÁGENES (via API Gateway) ====================
+
+export async function uploadSiteImage(file: File, folder: string = "general", contentId?: string): Promise<string> {
+  const token = await getAuthToken();
+  if (!token) throw new Error("Authentication required");
+
+  // Convert file to base64
+  const arrayBuffer = await file.arrayBuffer();
+  const base64 = btoa(
+    new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+  );
+
+  const response = await fetch(`${api.getApiUrl()}/admin/site-content/upload`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      fileName: file.name,
+      fileData: base64,
+      contentType: file.type,
+      folder,
+      contentId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to upload image");
+  }
+
+  const data = await response.json();
+  return data.url;
 }
 
 // Eliminar imagen del storage
 export async function deleteSiteImage(imagePath: string): Promise<void> {
-  const path = imagePath.split("/site-content/")[1];
-  if (!path) return;
+  const token = await getAuthToken();
+  if (!token) throw new Error("Authentication required");
 
-  const { error } = await supabase.storage.from("site-content").remove([path]);
+  const response = await fetch(`${api.getApiUrl()}/admin/site-content/image`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ imagePath }),
+  });
 
-  if (error) throw error;
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to delete image");
+  }
 }

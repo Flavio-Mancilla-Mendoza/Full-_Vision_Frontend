@@ -99,7 +99,6 @@ export default function Cart() {
   }
 
   const handleCheckout = () => {
-    // TODO: Implementar proceso de checkout
     navigate("/checkout");
   };
 

@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/useAuthCognito";
 import { getOrders, getOrder, type Order } from "@/services/orders";
-import { createOrderFromCart, updateOrderStatus, getAllOrdersPaginated } from "@/services/admin";
+import { updateOrderStatus, getAllOrdersPaginated } from "@/services/admin";
+import { getApiUrl } from "@/services/api";
+import { fetchAuthSession } from "@aws-amplify/auth";
 import type { OrderStatus } from "@/types";
 
 // Hook para obtener órdenes paginadas (Admin)
@@ -43,24 +45,24 @@ export function useUserOrders() {
   });
 }
 
-// Hook para crear orden desde el carrito
+// Hook para crear orden desde el carrito — via API Gateway (precios server-side)
 export function useCreateOrder() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({
-      userId,
       cartItems,
       shippingInfo,
       paymentMethod,
       customerNotes,
     }: {
-      userId: string;
+      userId?: string; // kept for backwards compat but ignored — server uses JWT
       cartItems: Array<{
         product_id: string;
         quantity: number;
-        product?: { name?: string; sale_price?: number; base_price?: number } | null;
+        // product info is ignored server-side; prices come from DB
+        product?: { name?: string; sale_price?: number | null; base_price?: number } | null;
       }>;
       shippingInfo: {
         name: string;
@@ -74,47 +76,41 @@ export function useCreateOrder() {
       paymentMethod: string;
       customerNotes?: string;
     }) => {
-      return createOrderFromCart(userId, cartItems, shippingInfo, paymentMethod, customerNotes);
+      const session = await fetchAuthSession();
+      const token = session.tokens?.idToken?.toString();
+      if (!token) throw new Error("Authentication required");
+
+      const response = await fetch(`${getApiUrl()}/orders/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items: cartItems.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+          })),
+          shippingInfo,
+          paymentMethod,
+          customerNotes: customerNotes || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error creating order: ${response.status}`);
+      }
+
+      return response.json();
     },
-    onSuccess: async (order, variables) => {
+    onSuccess: (order) => {
       // Invalidar queries del carrito y órdenes
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
 
-      // Enviar email de confirmación
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        await fetch(`${supabaseUrl}/functions/v1/send-order-confirmation`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            order_number: order.order_number,
-            customer_name: variables.shippingInfo.name,
-            customer_email: variables.shippingInfo.email,
-            customer_phone: variables.shippingInfo.phone,
-            total_amount: order.total_amount,
-            subtotal: order.subtotal,
-            tax_amount: order.tax_amount,
-            shipping_amount: order.shipping_amount,
-            shipping_address: variables.shippingInfo.address || null,
-            shipping_city: variables.shippingInfo.city || null,
-            customer_dni: variables.shippingInfo.dni || null,
-            payment_method: variables.paymentMethod,
-            items: variables.cartItems.map((item) => ({
-              name: item.product?.name || "Producto",
-              quantity: item.quantity,
-              unit_price: item.product?.sale_price || item.product?.base_price || 0,
-              total_price: (item.product?.sale_price || item.product?.base_price || 0) * item.quantity,
-            })),
-          }),
-        });
-      } catch (emailError) {
-        console.error("Error sending confirmation email:", emailError);
-        // No mostramos error al usuario, el pedido se creó correctamente
-      }
+      // El email de confirmación se envía desde el Lambda server-side
+      // — ya no se envía desde el frontend
 
       toast({
         title: "✅ Pedido creado exitosamente",

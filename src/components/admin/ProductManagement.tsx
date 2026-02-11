@@ -152,10 +152,10 @@ function ProductManagementInner() {
     deleteProduct,
   } = useProducts(1, 50);
 
+  // Initial brand load only (products are fetched by useQuery automatically)
   useEffect(() => {
-    refreshProducts();
-    loadBrands(); // Cargar marcas al iniciar
-  }, [refreshProducts, loadBrands]);
+    loadBrands();
+  }, [loadBrands]);
 
   // Actualizar filtros cuando cambian search o showOnlyDiscounted
   useEffect(() => {

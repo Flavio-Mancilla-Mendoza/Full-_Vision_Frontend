@@ -5,7 +5,7 @@ interface SplashScreenProps {
   minDisplayTime?: number;
 }
 
-export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minDisplayTime = 1200 }) => {
+export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minDisplayTime = 400 }) => {
   const [shouldHide, setShouldHide] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
 
@@ -23,7 +23,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onLoadComplete, minD
       setShouldHide(true);
       setTimeout(() => {
         onLoadComplete();
-      }, 500);
+      }, 300);
     }, minDisplayTime);
 
     return () => clearTimeout(timer);

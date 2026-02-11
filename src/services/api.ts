@@ -455,12 +455,152 @@ export const checkAuth = async (): Promise<boolean> => {
   }
 };
 
+// ================================================================
+// Categories API
+// ================================================================
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const categoriesApi = {
+  list: async (): Promise<ProductCategory[]> => {
+    return apiRequest<ProductCategory[]>("/categories", {}, true);
+  },
+};
+
+// ================================================================
+// Locations API
+// ================================================================
+
+export interface Location {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+  business_hours?: Record<string, unknown>;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const locationsApi = {
+  list: async (): Promise<Location[]> => {
+    return apiRequest<Location[]>("/locations", {}, true);
+  },
+  create: async (data: Partial<Location>): Promise<Location> => {
+    return apiRequest<Location>("/locations", { method: "POST", body: JSON.stringify(data) }, true);
+  },
+  update: async (id: string, data: Partial<Location>): Promise<Location> => {
+    return apiRequest<Location>(`/locations/${id}`, { method: "PUT", body: JSON.stringify(data) }, true);
+  },
+  delete: async (id: string): Promise<void> => {
+    return apiRequest<void>(`/locations/${id}`, { method: "DELETE" }, true);
+  },
+};
+
+// ================================================================
+// Appointments API
+// ================================================================
+
+export interface Appointment {
+  id: string;
+  user_id?: string;
+  location_id?: string;
+  appointment_date?: string;
+  appointment_time?: string;
+  duration_minutes?: number;
+  status?: string;
+  exam_type?: string;
+  patient_name?: string;
+  patient_phone?: string;
+  patient_email?: string;
+  notes?: string;
+  location?: Location | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const appointmentsApi = {
+  list: async (): Promise<Appointment[]> => {
+    return apiRequest<Appointment[]>("/appointments", {}, true);
+  },
+  create: async (data: Partial<Appointment>): Promise<Appointment> => {
+    return apiRequest<Appointment>("/appointments", { method: "POST", body: JSON.stringify(data) }, true);
+  },
+  update: async (id: string, data: Partial<Appointment>): Promise<Appointment> => {
+    return apiRequest<Appointment>(`/appointments/${id}`, { method: "PUT", body: JSON.stringify(data) }, true);
+  },
+};
+
+// ================================================================
+// Admin Profiles API
+// ================================================================
+
+export const adminProfilesApi = {
+  list: async (): Promise<Profile[]> => {
+    return apiRequest<Profile[]>("/admin/profiles", {}, true);
+  },
+  create: async (data: Partial<Profile>): Promise<Profile> => {
+    return apiRequest<Profile>("/admin/profiles", { method: "POST", body: JSON.stringify(data) }, true);
+  },
+  update: async (id: string, data: Partial<Profile>): Promise<Profile> => {
+    return apiRequest<Profile>(`/admin/profiles/${id}`, { method: "PUT", body: JSON.stringify(data) }, true);
+  },
+};
+
+// ================================================================
+// Product Images API
+// ================================================================
+
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  url: string;
+  s3_key?: string;
+  alt_text?: string;
+  sort_order?: number;
+  is_primary?: boolean;
+  created_at?: string;
+}
+
+export const productImagesApi = {
+  list: async (productId: string): Promise<ProductImage[]> => {
+    return apiRequest<ProductImage[]>(`/admin/product-images?product_id=${productId}`, {}, true);
+  },
+  create: async (data: Partial<ProductImage>): Promise<ProductImage> => {
+    return apiRequest<ProductImage>("/admin/product-images", { method: "POST", body: JSON.stringify(data) }, true);
+  },
+  update: async (imageId: string, data: Partial<ProductImage>): Promise<ProductImage> => {
+    return apiRequest<ProductImage>(`/admin/product-images/${imageId}`, { method: "PUT", body: JSON.stringify(data) }, true);
+  },
+  delete: async (imageId: string): Promise<void> => {
+    return apiRequest<void>(`/admin/product-images/${imageId}`, { method: "DELETE" }, true);
+  },
+  setPrimary: async (productId: string, imageId: string): Promise<void> => {
+    return apiRequest<void>("/admin/product-images/primary", { method: "PUT", body: JSON.stringify({ product_id: productId, image_id: imageId }) }, true);
+  },
+};
+
 export default {
   products: productsApi,
   orders: ordersApi,
   profile: profileApi,
   brands: brandsApi,
   cart: cartApi,
+  categories: categoriesApi,
+  locations: locationsApi,
+  appointments: appointmentsApi,
+  adminProfiles: adminProfilesApi,
+  productImages: productImagesApi,
   checkAuth,
   getApiUrl,
 };

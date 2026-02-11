@@ -23,14 +23,15 @@ const cognitoClient = new CognitoIdentityProviderClient({
 });
 
 const USER_POOL_ID = process.env.USER_POOL_ID;
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173').split(',');
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:8080,http://localhost:8081,http://localhost:5173,https://full-vision.vercel.app,https://full-vision-react.vercel.app').split(',');
 
 function getCorsHeaders(origin) {
     const allowedOrigin = ALLOWED_ORIGINS.find(o => o.trim() === origin) || ALLOWED_ORIGINS[0];
     return {
         'Access-Control-Allow-Origin': allowedOrigin,
-        'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Credentials': 'true',
         'Content-Type': 'application/json',
     };
 }

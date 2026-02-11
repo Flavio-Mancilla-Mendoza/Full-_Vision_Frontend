@@ -1,5 +1,6 @@
 // src/hooks/cart/cartUtils.ts - Funciones puras para cálculos del carrito
 import type { CartItemWithProductLocal } from "@/services/cart";
+import { calculateFinalPrice } from "@/lib/product-utils";
 
 export interface CartSummary {
   items: CartItemWithProductLocal[];
@@ -15,24 +16,15 @@ const FREE_SHIPPING_THRESHOLD = 300;
 const SHIPPING_COST = 25;
 
 /**
- * Calcula el precio final de un producto considerando descuentos
+ * Calcula el precio final de un producto considerando descuentos.
+ * Wrapper sobre calculateFinalPrice centralizado para mantener compatibilidad.
  */
 export function calculateProductPrice(product: {
   base_price?: number | null;
   sale_price?: number | null;
   discount_percentage?: number | null;
 }): number {
-  const basePrice = product.base_price || 0;
-
-  if (product.sale_price) {
-    return product.sale_price;
-  }
-
-  if (product.discount_percentage && product.discount_percentage > 0) {
-    return basePrice * (1 - product.discount_percentage / 100);
-  }
-
-  return basePrice;
+  return calculateFinalPrice({ base_price: product.base_price || 0, sale_price: product.sale_price, discount_percentage: product.discount_percentage });
 }
 
 /**

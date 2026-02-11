@@ -13,9 +13,6 @@ export type DbProductCategory = Database["public"]["Tables"]["product_categories
 export type DbBrand = Database["public"]["Tables"]["brands"]["Row"];
 export type DbProductImage = Database["public"]["Tables"]["product_images"]["Row"];
 export type DbSiteContent = Database["public"]["Tables"]["site_content"]["Row"];
-export type DbAttributeType = Database["public"]["Tables"]["attribute_types"]["Row"];
-export type DbAttributeValue = Database["public"]["Tables"]["attribute_values"]["Row"];
-export type DbProductAttribute = Database["public"]["Tables"]["product_attributes"]["Row"];
 
 // Tipos de inserción y actualización
 export type DbProductInsert = Database["public"]["Tables"]["products"]["Insert"];
@@ -168,4 +165,3 @@ export interface ExamResults {
 // Export para uso en componentes
 export * from "./database";
 export * from "./appointments";
-export * from "./attributes";

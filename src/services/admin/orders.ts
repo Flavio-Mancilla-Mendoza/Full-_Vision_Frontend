@@ -1,13 +1,17 @@
 // src/services/admin/orders.ts - Gestión de órdenes (Admin)
-import { supabase } from "@/lib/supabase";
+// Migrado a API Gateway — ya NO llama a Supabase directamente
+import { ordersApi } from "@/services/api";
+import { getApiUrl } from "@/services/api";
 import { parseDateInput } from "./helpers";
+import { getAuthToken } from "./helpers";
 import type { Order, OrderStatus, PrescriptionDetails } from "@/types";
 
 // Re-export types
 export type { Order, OrderStatus };
 
 /**
- * Obtener todas las órdenes con paginación
+ * Obtener todas las órdenes con paginación (vía API Gateway)
+ * El Lambda devuelve todas las órdenes para admin; paginación/filtros se aplican client-side.
  */
 export async function getAllOrdersPaginated(
   page = 1,
@@ -20,59 +24,60 @@ export async function getAllOrdersPaginated(
     search?: string;
   } = {}
 ): Promise<{ data: Order[]; count: number; totalPages: number }> {
-  let query = supabase
-    .from("orders")
-    .select(`
-      *,
-      order_items(
-        *,
-        product:products(
-          name,
-          sku,
-          product_images(url, alt_text, is_primary)
-        )
-      )
-    `, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range((page - 1) * limit, page * limit - 1);
+  // Obtener todas las órdenes via API Gateway (el Lambda filtra por admin/user)
+  const allOrders = (await ordersApi.list()) as unknown as Order[];
+
+  // Aplicar filtros client-side
+  let filtered = allOrders;
 
   if (filters.status && filters.status !== "all") {
-    query = query.eq("status", filters.status);
+    filtered = filtered.filter((o) => o.status === filters.status);
   }
   if (filters.userId) {
-    query = query.eq("user_id", filters.userId);
+    filtered = filtered.filter((o) => o.user_id === filters.userId);
   }
   if (filters.dateFrom) {
     const parsedDate = parseDateInput(filters.dateFrom);
     if (parsedDate) {
-      const startOfDayUTC = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), 0, 0, 0, 0);
-      query = query.gte("created_at", startOfDayUTC.toISOString());
+      const startOfDay = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), 0, 0, 0, 0);
+      filtered = filtered.filter((o) => o.created_at && new Date(o.created_at) >= startOfDay);
     }
   }
   if (filters.dateTo) {
     const parsedDate = parseDateInput(filters.dateTo);
     if (parsedDate) {
-      const endOfDayUTC = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), 23, 59, 59, 999);
-      query = query.lte("created_at", endOfDayUTC.toISOString());
+      const endOfDay = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), 23, 59, 59, 999);
+      filtered = filtered.filter((o) => o.created_at && new Date(o.created_at) <= endOfDay);
     }
   }
   if (filters.search) {
-    query = query.or(
-      `order_number.ilike.%${filters.search}%,shipping_name.ilike.%${filters.search}%,shipping_email.ilike.%${filters.search}%`
+    const search = filters.search.toLowerCase();
+    filtered = filtered.filter((o) =>
+      (o.order_number && o.order_number.toLowerCase().includes(search)) ||
+      (o.shipping_name && o.shipping_name.toLowerCase().includes(search)) ||
+      (o.shipping_email && o.shipping_email.toLowerCase().includes(search))
     );
   }
 
-  const { data, error, count } = await query;
+  // Ordenar por fecha descendente
+  filtered.sort((a, b) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
 
-  if (error) throw error;
+  // Paginación client-side
+  const count = filtered.length;
+  const start = (page - 1) * limit;
+  const paged = filtered.slice(start, start + limit);
 
   return {
-    data: (data || []).map((order) => ({
+    data: paged.map((order) => ({
       ...order,
       status: order.status as OrderStatus,
-    })) as Order[],
-    count: count || 0,
-    totalPages: Math.ceil((count || 0) / limit),
+    })),
+    count,
+    totalPages: Math.ceil(count / limit),
   };
 }
 
@@ -85,76 +90,42 @@ export async function getAllOrders(): Promise<Order[]> {
 }
 
 /**
- * Obtener órdenes de un usuario
+ * Obtener órdenes de un usuario (vía API Gateway)
  */
 export async function getUserOrders(userId: string): Promise<Order[]> {
-  const { data, error } = await supabase
-    .from("orders")
-    .select(`
-      *,
-      order_items(
-        *,
-        product:products(
-          *,
-          product_images(*)
-        )
-      )
-    `)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return (data || []).map((order) => ({
+  // La API Gateway devuelve todas las órdenes (para admin).
+  // Filtramos por userId client-side.
+  const allOrders = (await ordersApi.list()) as unknown as Order[];
+  const userOrders = allOrders.filter((o) => o.user_id === userId);
+  userOrders.sort((a, b) => {
+    const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+    const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+    return dateB - dateA;
+  });
+  return userOrders.map((order) => ({
     ...order,
     status: order.status as OrderStatus,
-  })) as Order[];
+  }));
 }
 
 /**
- * Crear nueva orden
+ * Crear nueva orden (vía API Gateway)
  */
 export async function createOrder(orderData: Omit<Order, "id" | "created_at" | "updated_at" | "order_items">) {
-  const { data, error } = await supabase.from("orders").insert([orderData]).select().single();
-
-  if (error) throw error;
-  return data;
+  return (await ordersApi.create(orderData as Partial<Order>)) as unknown as Order;
 }
 
 /**
- * Actualizar estado de orden
+ * Actualizar estado de orden (vía API Gateway)
  */
 export async function updateOrderStatus(orderId: string, status: Order["status"], adminNotes?: string) {
-  const updateData: Partial<Order> = { status };
+  const updateData: Record<string, unknown> = { status };
   if (adminNotes) {
     updateData.admin_notes = adminNotes;
   }
 
-  const { data, error } = await supabase.from("orders").update(updateData).eq("id", orderId).select().single();
-
-  if (error) throw error;
-
-  // Reactivar productos si la orden se cancela
-  if (status === "cancelled") {
-    const { data: orderItems, error: itemsError } = await supabase.from("order_items").select("product_id").eq("order_id", orderId);
-
-    if (!itemsError && orderItems && orderItems.length > 0) {
-      const productIds = orderItems.map((item) => item.product_id).filter((id): id is string => id !== null);
-
-      const { error: reactivateError } = await supabase
-        .from("products")
-        .update({
-          is_active: true,
-          updated_at: new Date().toISOString(),
-        })
-        .in("id", productIds);
-
-      if (reactivateError) {
-        console.error("Error reactivando productos:", reactivateError);
-      }
-    }
-  }
-
-  return data;
+  const updated = (await ordersApi.update(orderId, updateData as Partial<Order>)) as unknown as Order;
+  return updated;
 }
 
 /**
@@ -183,7 +154,8 @@ interface CartItemForOrder {
 }
 
 /**
- * Crear orden desde el carrito
+ * Crear orden desde el carrito (vía API Gateway /orders/checkout)
+ * Los precios se calculan server-side; nunca se confía en precios del frontend.
  */
 export async function createOrderFromCart(
   userId: string,
@@ -200,83 +172,32 @@ export async function createOrderFromCart(
   paymentMethod: string,
   customerNotes?: string
 ) {
-  // Calcular totales
-  const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.product?.sale_price || item.product?.base_price || 0;
-    return sum + price * item.quantity;
-  }, 0);
+  const token = await getAuthToken();
+  if (!token) throw new Error("Authentication required");
 
-  const taxRate = 0.18;
-  const taxAmount = subtotal * taxRate;
-  const shippingAmount = subtotal >= 300 ? 0 : 25;
-  const totalAmount = subtotal + taxAmount + shippingAmount;
+  const response = await fetch(`${getApiUrl()}/orders/checkout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      items: cartItems.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        prescription_details: item.prescription_details || null,
+        special_instructions: item.special_instructions || null,
+      })),
+      shippingInfo,
+      paymentMethod,
+      customerNotes: customerNotes || undefined,
+    }),
+  });
 
-  const orderNumber = await generateOrderNumber();
-
-  // Crear la orden
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert([
-      {
-        user_id: userId,
-        order_number: orderNumber,
-        status: "pending",
-        subtotal,
-        tax_amount: taxAmount,
-        shipping_amount: shippingAmount,
-        total_amount: totalAmount,
-        shipping_name: shippingInfo.name,
-        shipping_email: shippingInfo.email,
-        shipping_phone: shippingInfo.phone,
-        shipping_address: shippingInfo.address,
-        shipping_city: shippingInfo.city,
-        shipping_postal_code: shippingInfo.postal_code,
-        customer_dni: shippingInfo.dni || null,
-        billing_name: shippingInfo.name,
-        billing_email: shippingInfo.email,
-        customer_notes: customerNotes || null,
-        admin_notes: `Método de pago: ${paymentMethod}`,
-      },
-    ])
-    .select()
-    .single();
-
-  if (orderError) throw orderError;
-
-  // Crear los items de la orden
-  const orderItems = cartItems.map((item) => ({
-    order_id: order.id,
-    product_id: item.product_id,
-    quantity: item.quantity,
-    unit_price: item.product?.sale_price || item.product?.base_price || 0,
-    total_price: (item.product?.sale_price || item.product?.base_price || 0) * item.quantity,
-    prescription_details: item.prescription_details || null,
-    special_instructions: item.special_instructions || null,
-  }));
-
-  const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-  if (itemsError) throw itemsError;
-
-  // Desactivar productos en la orden
-  const productIds = cartItems.map((item) => item.product_id).filter((id): id is string => id !== null);
-
-  const { error: deactivateError } = await supabase
-    .from("products")
-    .update({
-      is_active: false,
-      updated_at: new Date().toISOString(),
-    })
-    .in("id", productIds);
-
-  if (deactivateError) {
-    console.error("Error desactivando productos:", deactivateError);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Error creating order: ${response.status}`);
   }
 
-  // Limpiar el carrito
-  const { error: clearError } = await supabase.from("cart_items").delete().eq("user_id", userId);
-
-  if (clearError) throw clearError;
-
-  return order;
+  return response.json();
 }

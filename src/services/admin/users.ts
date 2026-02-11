@@ -1,5 +1,5 @@
-// src/services/admin/users.ts - Gestión de usuarios (Admin)
-import { supabase } from "@/lib/supabase";
+// src/services/admin/users.ts - Gestión de usuarios (Admin) via API Gateway
+import { adminProfilesApi } from "@/services/api";
 import type { UserRole } from "@/types";
 
 export interface UserProfile {
@@ -18,19 +18,11 @@ export interface UserProfile {
  */
 export async function getAllUsers(): Promise<UserProfile[]> {
   try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, email, full_name, role, phone, is_active, created_at, updated_at")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("❌ Admin Service: Error en consulta:", error);
-      throw new Error(`Error al consultar usuarios: ${error.message} (Código: ${error.code || "N/A"})`);
-    }
+    const data = await adminProfilesApi.list();
 
     return (data || []).map((user) => ({
       ...user,
-      role: user.role as UserRole | null,
+      role: (user.role as UserRole) || null,
       email: user.email || null,
       full_name: user.full_name || null,
       phone: user.phone || null,
@@ -44,39 +36,32 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 }
 
 /**
- * Obtener usuarios con paginación y filtros
+ * Obtener usuarios con paginación y filtros (client-side filtering)
  */
 export async function getAllUsersPaginated(
   page = 1,
   limit = 50,
   filters: { search?: string } = {}
 ): Promise<{ data: UserProfile[]; count: number; totalPages: number }> {
-  let query = supabase
-    .from("profiles")
-    .select("id, email, full_name, role, phone, is_active, created_at, updated_at", { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range((page - 1) * limit, page * limit - 1);
+  const allUsers = await getAllUsers();
+  let filtered = allUsers;
 
   if (filters.search) {
-    const q = `%${filters.search}%`;
-    query = query.or(`full_name.ilike.${q},email.ilike.${q},phone.ilike.${q}`);
+    const q = filters.search.toLowerCase();
+    filtered = filtered.filter(
+      (user) =>
+        user.full_name?.toLowerCase().includes(q) ||
+        user.email?.toLowerCase().includes(q) ||
+        user.phone?.toLowerCase().includes(q)
+    );
   }
 
-  const { data, error, count } = await query;
-  if (error) {
-    console.error("Error fetching paginated users:", error);
-    throw error;
-  }
+  const count = filtered.length;
+  const totalPages = Math.ceil(count / limit);
+  const start = (page - 1) * limit;
+  const paged = filtered.slice(start, start + limit);
 
-  return {
-    data: (data || []).map((user) => ({
-      ...user,
-      role: user.role as UserRole | null,
-      is_active: user.is_active ?? false,
-    })) as UserProfile[],
-    count: count || 0,
-    totalPages: Math.ceil((count || 0) / limit),
-  };
+  return { data: paged, count, totalPages };
 }
 
 /**
@@ -129,22 +114,19 @@ export async function createUser(userData: {
       throw new Error(result.error || "Error desconocido al crear usuario");
     }
 
-    // Crear el perfil en Supabase
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .insert({
+    // Crear el perfil via API Gateway (Lambda → Supabase SERVICE_ROLE)
+    let profileData = null;
+    try {
+      profileData = await adminProfilesApi.create({
         id: result.userSub,
         email: userData.email,
         full_name: userData.full_name,
         role: userData.role,
         phone: userData.phone,
         is_active: true,
-      })
-      .select()
-      .single();
-
-    if (profileError) {
-      console.error("❌ Error creando perfil en Supabase:", profileError);
+      });
+    } catch (profileError) {
+      console.error("❌ Error creando perfil via API:", profileError);
     }
 
     return {
@@ -163,9 +145,8 @@ export async function createUser(userData: {
  * Actualizar usuario
  */
 export async function updateUser(userId: string, updates: Partial<UserProfile>) {
-  const { data, error } = await supabase.from("profiles").update(updates).eq("id", userId).select().single();
+  const data = await adminProfilesApi.update(userId, updates);
 
-  if (error) throw error;
   return {
     success: true,
     user: data,
@@ -177,8 +158,6 @@ export async function updateUser(userId: string, updates: Partial<UserProfile>) 
  * Desactivar usuario
  */
 export async function deactivateUser(userId: string) {
-  const { data, error } = await supabase.from("profiles").update({ is_active: false }).eq("id", userId).select().single();
-
-  if (error) throw error;
+  const data = await adminProfilesApi.update(userId, { is_active: false });
   return data;
 }

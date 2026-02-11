@@ -35,9 +35,6 @@ export interface MercadoPagoPreference {
 
 export interface CreatePreferenceRequest {
   orderId: string;
-  orderNumber: string;
-  items: MercadoPagoItem[];
-  totalAmount: number;
   payer?: {
     name?: string;
     email?: string;
@@ -47,7 +44,7 @@ export interface CreatePreferenceRequest {
 
 /**
  * Crea una preferencia de pago en Mercado Pago
- * y retorna la URL para redirigir al cliente
+ * Solo envía orderId — el Lambda consulta items y precios de la BD
  */
 export async function createMercadoPagoPreference(request: CreatePreferenceRequest): Promise<MercadoPagoPreference> {
   try {
@@ -63,9 +60,6 @@ export async function createMercadoPagoPreference(request: CreatePreferenceReque
       },
       body: JSON.stringify({
         orderId: request.orderId,
-        orderNumber: request.orderNumber,
-        items: request.items,
-        totalAmount: request.totalAmount,
         payer: request.payer,
         // URLs de retorno
         back_urls: {
