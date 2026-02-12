@@ -44,6 +44,25 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
   // Cargar filtros disponibles del backend
   const { data: filtersData, isLoading: isLoadingFilters } = useDynamicFiltersForGender(gender);
 
+  // Transformar datos del backend al formato FilterOption
+  const brandOptions = useMemo(() =>
+    (filtersData?.brands ?? []).map((b: { id: string; name: string; slug: string; count?: number }) => ({
+      value: b.id,
+      label: b.name,
+      count: b.count ?? 0,
+    })),
+    [filtersData?.brands]
+  );
+
+  const discountOptions = useMemo(() =>
+    (filtersData?.discounts ?? []).map((d: number) => ({
+      value: String(d),
+      label: `${d}% off`,
+      count: 0,
+    })),
+    [filtersData?.discounts]
+  );
+
   // Contar filtros activos
   const activeFiltersCount = useMemo(() => {
     let count = selectedBrands.length + selectedDiscounts.length;
@@ -184,8 +203,8 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
 
         {/* Barra de filtros horizontal */}
         <FilterBar
-          brands={filtersData?.brands ?? []}
-          discounts={filtersData?.discounts ?? []}
+          brands={brandOptions}
+          discounts={discountOptions}
           priceRange={filtersData?.priceRange ?? { min: 0, max: 1000 }}
           selectedBrands={selectedBrands}
           selectedDiscounts={selectedDiscounts}
