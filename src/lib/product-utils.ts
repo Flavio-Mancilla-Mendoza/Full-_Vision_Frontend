@@ -164,12 +164,13 @@ export function formatPrice(price: number): string {
  * Acepta ambos tipos para evitar casteos innecesarios.
  */
 export function transformProductForCart(product: IProduct | OpticalProduct) {
+  const brand = product.brand as { id?: string; name: string; slug?: string } | null | undefined;
   return {
     ...product,
-    brand: product.brand ? {
-      id: product.id,
-      name: product.brand.name,
-      slug: product.slug,
+    brand: brand ? {
+      id: brand.id || product.id,
+      name: brand.name,
+      slug: brand.slug || '',
       logo_url: "",
       description: "",
       is_active: true,

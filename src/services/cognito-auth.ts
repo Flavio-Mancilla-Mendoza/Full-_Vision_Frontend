@@ -268,11 +268,11 @@ export async function logoutUser() {
 
 /**
  * Obtener usuario actual autenticado
+ * Acepta sesión pre-obtenida para evitar llamadas redundantes a fetchAuthSession
  */
-export async function getCurrentAuthUser(): Promise<User | null> {
+export async function getCurrentAuthUser(existingSession?: Awaited<ReturnType<typeof fetchAuthSession>>): Promise<User | null> {
   try {
-    // Primero verificar que la sesión tenga tokens válidos
-    const session = await fetchAuthSession();
+    const session = existingSession || await fetchAuthSession();
     if (!session.tokens?.accessToken) {
       return null;
     }
@@ -288,10 +288,9 @@ export async function getCurrentAuthUser(): Promise<User | null> {
       attributes,
     };
   } catch (error) {
-    // Sesión expirada/inválida - limpiar silenciosamente
-    try {
-      await signOut();
-    } catch { /* ignorar error de signOut */ }
+    // No llamar signOut() aquí — puede ser un error transitorio de red.
+    // Si los tokens realmente expiraron, Amplify manejará el refresh automáticamente.
+    console.warn("Error obteniendo usuario actual (no se cierra sesión):", error);
     return null;
   }
 }
@@ -308,7 +307,8 @@ export async function getCurrentAuthSession(): Promise<AuthSession> {
       return { user: null, accessToken: null, idToken: null };
     }
 
-    const user = await getCurrentAuthUser();
+    // Reutilizar la sesión para evitar otra llamada a fetchAuthSession
+    const user = await getCurrentAuthUser(session);
 
     return {
       user,

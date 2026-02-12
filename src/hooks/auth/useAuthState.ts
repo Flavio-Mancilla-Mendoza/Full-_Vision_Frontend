@@ -6,7 +6,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Hub } from "@aws-amplify/core";
-import { getCurrentAuthSession, isAuthenticated, type User } from "@/services/cognito-auth";
+import { getCurrentAuthSession, type User } from "@/services/cognito-auth";
 import { getUserRole, type UserRole } from "./authUtils";
 
 // Flag para debugging
@@ -43,13 +43,7 @@ export function useAuthState(): AuthState & { refresh: () => Promise<void> } {
 
   const loadAuthData = useCallback(async () => {
     try {
-      const authenticated = await isAuthenticated();
-
-      if (!authenticated) {
-        setState({ session: null, isAdmin: false, loading: false });
-        return;
-      }
-
+      // Una sola llamada: getCurrentAuthSession ya verifica tokens internamente
       const authSession = await getCurrentAuthSession();
 
       if (!authSession?.user) {

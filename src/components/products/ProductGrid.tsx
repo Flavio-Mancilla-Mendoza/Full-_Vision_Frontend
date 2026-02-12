@@ -12,7 +12,7 @@ import { IProduct } from "@/types/IProducts";
 
 interface ProductGridProps {
   products: IProduct[];
-  cartItems: Array<{ id: string; quantity: number }>;
+  cartItems: Array<{ id: string; product_id: string; quantity: number }>;
   isAddingToCart: boolean;
   addingProductId: string | null | undefined;
   onAddToCart: (product: IProduct) => void;
@@ -61,11 +61,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           discount_percentage={product.discount_percentage}
           brand_name={product.brand?.name}
           lens_type={product.lens_type}
+          stock_quantity={product.stock_quantity}
           onAddToCart={() => onAddToCart(product)}
           isAddingToCart={isAddingToCart && addingProductId === product.id}
-          isInCart={cartItems.some((item) => item.id === product.id)}
+          isInCart={cartItems.some((item) => item.product_id === product.id)}
           quantity={
-            cartItems.find((item) => item.id === product.id)?.quantity || 0
+            cartItems.find((item) => item.product_id === product.id)?.quantity || 0
           }
           loading={index >= 6 ? "lazy" : "eager"}
           index={index}

@@ -77,7 +77,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   }
 
   return (
-    <div className={cn("relative overflow-hidden", className)} style={{ width, height }}>
+    <div className={cn("relative overflow-hidden", className)}>
       {/* Placeholder spinner - se oculta cuando la imagen carga */}
       {placeholder === "blur" && !isLoaded && (
         <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center transition-opacity duration-300">
@@ -92,7 +92,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         alt={alt}
         width={width}
         height={height}
-        className={cn("transition-opacity duration-500 ease-out", isLoaded ? "opacity-100" : "opacity-0", className)}
+        className={cn("w-full h-full transition-opacity duration-500 ease-out", isLoaded ? "opacity-100" : "opacity-0")}
         onLoad={handleLoad}
         onError={handleError}
         loading={priority ? "eager" : "lazy"}
@@ -129,7 +129,7 @@ export const ProductImage: React.FC<OptimizedImageProps & { isHero?: boolean }> 
       src={src}
       alt={alt}
       priority={priority || isHero}
-      className={cn("object-cover transition-transform duration-300 hover:scale-105", isHero && "object-center", className)}
+      className={cn(isHero && "object-center", className)}
       placeholder="blur"
       quality={isHero ? 90 : 80}
     />

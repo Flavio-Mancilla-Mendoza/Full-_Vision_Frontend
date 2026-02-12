@@ -392,39 +392,80 @@ export const ProductDialog: React.FC<Props> = ({ open, onOpenChange, editingProd
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="frame_material">Material del Marco</Label>
-                  <Input
-                    id="frame_material"
-                    value={formData.frame_material}
-                    onChange={(e) => setFormData({ ...formData, frame_material: e.target.value })}
-                    placeholder="Ej: Acetato, Metal, Titanio"
-                  />
+                  <Select
+                    value={formData.frame_material || ""}
+                    onValueChange={(v) => setFormData({ ...formData, frame_material: v })}
+                  >
+                    <SelectTrigger id="frame_material">
+                      <SelectValue placeholder="Seleccionar material" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="acetato">Acetato</SelectItem>
+                      <SelectItem value="metal">Metal</SelectItem>
+                      <SelectItem value="titanio">Titanio</SelectItem>
+                      <SelectItem value="plastico">Plástico</SelectItem>
+                      <SelectItem value="nylon">Nylon</SelectItem>
+                      <SelectItem value="mixto">Mixto</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lens_type">Tipo de Lente</Label>
-                  <Input
-                    id="lens_type"
-                    value={formData.lens_type}
-                    onChange={(e) => setFormData({ ...formData, lens_type: e.target.value })}
-                    placeholder="Ej: Monofocal, Bifocal, Progresivo"
-                  />
+                  <Select
+                    value={formData.lens_type || ""}
+                    onValueChange={(v) => setFormData({ ...formData, lens_type: v })}
+                  >
+                    <SelectTrigger id="lens_type">
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="sol">Sol</SelectItem>
+                      <SelectItem value="graduado">Graduado</SelectItem>
+                      <SelectItem value="fotocromático">Fotocromático</SelectItem>
+                      <SelectItem value="filtro-azul">Filtro Azul</SelectItem>
+                      <SelectItem value="lectura">Lectura</SelectItem>
+                      <SelectItem value="contacto">Contacto</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="frame_style">Estilo del Marco</Label>
-                  <Input
-                    id="frame_style"
-                    value={formData.frame_style}
-                    onChange={(e) => setFormData({ ...formData, frame_style: e.target.value })}
-                    placeholder="Ej: Aviador, Redondo, Rectangular"
-                  />
+                  <Select
+                    value={formData.frame_style || ""}
+                    onValueChange={(v) => setFormData({ ...formData, frame_style: v })}
+                  >
+                    <SelectTrigger id="frame_style">
+                      <SelectValue placeholder="Seleccionar estilo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="aviador">Aviador</SelectItem>
+                      <SelectItem value="rectangular">Rectangular</SelectItem>
+                      <SelectItem value="redondo">Redondo</SelectItem>
+                      <SelectItem value="cat-eye">Cat Eye</SelectItem>
+                      <SelectItem value="wayfarer">Wayfarer</SelectItem>
+                      <SelectItem value="deportivo">Deportivo</SelectItem>
+                      <SelectItem value="oversize">Oversize</SelectItem>
+                      <SelectItem value="sin-montura">Sin Montura</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="frame_size">Tamaño del Marco</Label>
-                  <Input
-                    id="frame_size"
-                    value={formData.frame_size}
-                    onChange={(e) => setFormData({ ...formData, frame_size: e.target.value })}
-                    placeholder="Ej: S, M, L o 52-18-140"
-                  />
+                  <Select
+                    value={formData.frame_size || ""}
+                    onValueChange={(v) => setFormData({ ...formData, frame_size: v })}
+                  >
+                    <SelectTrigger id="frame_size">
+                      <SelectValue placeholder="Seleccionar tamaño" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="XS">XS - Extra Pequeño</SelectItem>
+                      <SelectItem value="S">S - Pequeño</SelectItem>
+                      <SelectItem value="M">M - Mediano</SelectItem>
+                      <SelectItem value="L">L - Grande</SelectItem>
+                      <SelectItem value="XL">XL - Extra Grande</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lens_color">Color del Lente</Label>
