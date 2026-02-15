@@ -69,14 +69,11 @@ npx cdk deploy --profile default --context environment=dev
 3. Agregar producto al carrito
 4. Verificar que `/cart` responde correctamente con JWT real
 
-### 4. ❌ Limpiar directorio test-minimal
-Existe `infrastructure/lambda/test-minimal/` que se creó para debugging. Eliminar:
-```bash
-Remove-Item -Recurse -Force infrastructure\lambda\test-minimal
-```
+### 4. ✅ Limpiar directorio test-minimal
+**COMPLETADO (verificado 14 Feb 2026)** — El directorio `infrastructure/lambda/test-minimal/` ya fue eliminado.
 
-### 5. ❌ Revisar si `@aws-sdk/client-s3@3.750.0` es suficiente
-Se pinned a 3.750.0 para evitar ESM transitivo. Verificar que las funcionalidades de S3 (presigned URLs) funcionan con esta versión.
+### 5. ✅ Revisar si `@aws-sdk/client-s3@3.750.0` es suficiente
+**COMPLETADO (verificado 14 Feb 2026)** — Pinned a `3.750.0`, Lambda activa y funcional. Presigned URLs de S3 operativas.
 
 ---
 

@@ -41,9 +41,8 @@ const CartDrawerItem = React.memo(function CartDrawerItem({ item, onUpdateQuanti
       </div>
 
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm line-clamp-2 mb-1">{product?.name || "Producto"}</h4>
-
-        {product?.brand?.name && <p className="text-xs text-muted-foreground mb-2">{product.brand.name}</p>}
+        <h4 className="font-medium text-sm mb-0.5">{product?.brand?.name || "Sin marca"}</h4>
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{product?.name || "Producto"}</p>
 
         <div className="flex items-center justify-between">
           <span className="font-semibold text-sm">{formatCurrency(finalPrice)}</span>
@@ -190,9 +189,9 @@ const CartDrawer = React.forwardRef<HTMLDivElement, CartDrawerProps>(({ children
           </div>
         ) : (
           // Carrito con productos
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             {/* Lista de productos */}
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="space-y-4 pr-4">
                 {cartItems &&
                   Array.isArray(cartItems) &&

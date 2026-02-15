@@ -1,6 +1,6 @@
 # Despliegue Pendiente
 
-## 1. Dashboard Admin → API Gateway (LISTO para deploy)
+## 1. ✅ Dashboard Admin → API Gateway (DESPLEGADO - 12 Feb 2026)
 
 Se migró `getDashboardStats()` de consultas directas a Supabase a un endpoint Lambda.
 
@@ -10,41 +10,29 @@ Se migró `getDashboardStats()` de consultas directas a Supabase a un endpoint L
 - **Lambda handler**: `infrastructure/lambda/supabase-products/handlers/dashboard.js` (NUEVO)
 - **Router**: `infrastructure/lambda/supabase-products/handlers/router.js` → ruta `/admin/dashboard` agregada
 
-### Pasos para desplegar
+### Estado del deploy
 
-1. **Desplegar el Lambda actualizado**:
-   ```bash
-   cd infrastructure
-   npx cdk deploy FullVisionStack
-   ```
-   O si se despliega manualmente, comprimir el contenido de `lambda/supabase-products/` y subir a AWS Lambda.
-
-2. **Verificar variable de entorno**: `VITE_API_GATEWAY_URL` debe apuntar al API Gateway correcto donde está desplegado `supabase-products`.
-
-3. **Probar**: Iniciar sesión con un usuario del grupo `Admins` en Cognito y verificar que el dashboard carga las estadísticas.
+- ✅ Lambda `full-vision-supabase-products-dev` desplegada (12 Feb 2026, nodejs20.x, Active)
+- ✅ Ruta `/admin/dashboard` responde correctamente (401 sin auth = esperado)
+- ✅ Frontend ya apunta a API Gateway
+- ⏳ Pendiente: probar end-to-end con usuario Admin logueado en Cognito
 
 ---
 
-## 2. Servicios Admin pendientes de migración
+## 2. ✅ Servicios Admin migrados a API Gateway (verificado 14 Feb 2026)
 
-Los siguientes servicios en `src/services/admin/` aún hacen consultas directas a Supabase con `anon key` desde el frontend. Deben migrarse al patrón Lambda + API Gateway como se hizo con dashboard:
+Todos los servicios en `src/services/admin/` ya están migrados a API Gateway + Lambda. Ninguno usa Supabase directo desde el frontend.
 
-| Servicio | Archivo | Descripción |
-|----------|---------|-------------|
-| Usuarios | `admin/users.ts` | CRUD de usuarios admin |
-| Productos | `admin/products.ts` | Gestión de productos |
-| Órdenes | `admin/orders.ts` | Gestión de pedidos |
-| Locales | `admin/locations.ts` | Locales y sucursales |
-| Citas | `admin/appointments.ts` | Citas de examen visual |
-| Imágenes | `admin/images.ts` | Upload de imágenes |
-| Featured | `admin/featured.ts` | Productos destacados |
-| Helpers | `admin/helpers.ts` | Utilidades compartidas (auth token) |
-
-### Prioridad sugerida
-1. `orders.ts` — datos sensibles de pedidos
-2. `users.ts` — datos de usuarios
-3. `products.ts` — ya existe proxy parcial en `supabase-products`
-4. El resto en orden de criticidad
+| Servicio | Archivo | Estado |
+|----------|---------|--------|
+| Usuarios | `admin/users.ts` | ✅ Usa `adminProfilesApi` + API Gateway |
+| Productos | `admin/products.ts` | ✅ Usa `productsApi`, `brandsApi`, `categoriesApi` |
+| Órdenes | `admin/orders.ts` | ✅ Usa `ordersApi` + API Gateway |
+| Locales | `admin/locations.ts` | ✅ Usa `locationsApi` + API Gateway |
+| Citas | `admin/appointments.ts` | ✅ Usa `appointmentsApi` + API Gateway |
+| Imágenes | `admin/images.ts` | ✅ Usa `productImagesApi` + presigned URLs |
+| Featured | `admin/featured.ts` | ✅ Usa `productsApi`, `ordersApi` |
+| Helpers | `admin/helpers.ts` | ✅ Utilidades (Cognito auth, no Supabase) |
 
 ---
 

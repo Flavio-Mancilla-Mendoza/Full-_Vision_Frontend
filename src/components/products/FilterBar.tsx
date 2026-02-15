@@ -1,6 +1,6 @@
 /**
  * FilterBar - Barra horizontal de filtros con dropdowns
- * Reemplaza el FilterSidebar vertical con una barra compacta
+ * Filtros estáticos/establecidos sin lógica dinámica
  */
 
 import React from "react";
@@ -22,64 +22,54 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { X, ChevronDown } from "lucide-react";
+import { PRICE_RANGES, COLOR_OPTIONS, SHAPE_OPTIONS, MATERIAL_OPTIONS } from "@/lib/filter-constants";
 
-interface FilterOption {
+// ======================= INTERFACES =======================
+
+interface BrandOption {
   value: string;
   label: string;
-  count: number;
-}
-
-interface PriceRange {
-  min: number;
-  max: number;
 }
 
 interface FilterBarProps {
-  // Datos de filtros
-  brands: FilterOption[];
-  discounts: FilterOption[];
-  priceRange: PriceRange;
-  // Estado actual
+  brands: BrandOption[];
   selectedBrands: string[];
-  selectedDiscounts: string[];
   priceMin: number;
   priceMax: number;
+  selectedColors: string[];
+  selectedShapes: string[];
+  selectedMaterials: string[];
   sortBy: string;
   activeFiltersCount: number;
-  // Callbacks
   onToggleBrand: (brand: string) => void;
-  onToggleDiscount: (discount: string) => void;
-  onSortChange: (value: string) => void;
   onPriceChange: (min: number, max: number) => void;
+  onToggleColor: (color: string) => void;
+  onToggleShape: (shape: string) => void;
+  onToggleMaterial: (material: string) => void;
+  onSortChange: (value: string) => void;
   onClearFilters: () => void;
 }
 
-// Rangos de precio predefinidos para el dropdown
-const PRICE_RANGES = [
-  { label: "Todos los precios", min: 0, max: 999999 },
-  { label: "Hasta S/ 200", min: 0, max: 200 },
-  { label: "S/ 200 - S/ 500", min: 200, max: 500 },
-  { label: "S/ 500 - S/ 1,000", min: 500, max: 1000 },
-  { label: "Más de S/ 1,000", min: 1000, max: 999999 },
-];
+// ======================= COMPONENTE =======================
 
 export const FilterBar: React.FC<FilterBarProps> = ({
   brands,
-  discounts,
-  priceRange,
   selectedBrands,
-  selectedDiscounts,
   priceMin,
   priceMax,
+  selectedColors,
+  selectedShapes,
+  selectedMaterials,
   sortBy,
   activeFiltersCount,
   onToggleBrand,
-  onToggleDiscount,
-  onSortChange,
   onPriceChange,
+  onToggleColor,
+  onToggleShape,
+  onToggleMaterial,
+  onSortChange,
   onClearFilters,
 }) => {
-  // Determinar etiqueta de precio actual
   const currentPriceLabel =
     priceMin === 0 && priceMax >= 999999
       ? "Precio"
@@ -114,8 +104,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 onCheckedChange={() => onToggleBrand(brand.value)}
                 onSelect={(e) => e.preventDefault()}
               >
-                <span className="flex-1">{brand.label}</span>
-                <span className="text-xs text-muted-foreground ml-2">({brand.count})</span>
+                {brand.label}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -153,45 +142,110 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Descuento */}
-      {discounts.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={`gap-1.5 ${
-                selectedDiscounts.length > 0 ? "border-primary text-primary" : ""
-              }`}
+      {/* Color */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`gap-1.5 ${selectedColors.length > 0 ? "border-primary text-primary" : ""}`}
+          >
+            Color
+            {selectedColors.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {selectedColors.length}
+              </Badge>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Filtrar por color
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {COLOR_OPTIONS.map((color) => (
+            <DropdownMenuCheckboxItem
+              key={color.value}
+              checked={selectedColors.includes(color.value)}
+              onCheckedChange={() => onToggleColor(color.value)}
+              onSelect={(e) => e.preventDefault()}
             >
-              Descuento
-              {selectedDiscounts.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                  {selectedDiscounts.length}
-                </Badge>
-              )}
-              <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48">
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Filtrar por descuento
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {discounts.map((discount) => (
-              <DropdownMenuCheckboxItem
-                key={discount.value}
-                checked={selectedDiscounts.includes(discount.value)}
-                onCheckedChange={() => onToggleDiscount(discount.value)}
-                onSelect={(e) => e.preventDefault()}
-              >
-                <span className="flex-1">{discount.label}</span>
-                <span className="text-xs text-muted-foreground ml-2">({discount.count})</span>
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+              {color.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Forma */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`gap-1.5 ${selectedShapes.length > 0 ? "border-primary text-primary" : ""}`}
+          >
+            Forma
+            {selectedShapes.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {selectedShapes.length}
+              </Badge>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Filtrar por forma
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {SHAPE_OPTIONS.map((shape) => (
+            <DropdownMenuCheckboxItem
+              key={shape.value}
+              checked={selectedShapes.includes(shape.value)}
+              onCheckedChange={() => onToggleShape(shape.value)}
+              onSelect={(e) => e.preventDefault()}
+            >
+              {shape.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Material */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={`gap-1.5 ${selectedMaterials.length > 0 ? "border-primary text-primary" : ""}`}
+          >
+            Material
+            {selectedMaterials.length > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                {selectedMaterials.length}
+              </Badge>
+            )}
+            <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48 max-h-64 overflow-y-auto">
+          <DropdownMenuLabel className="text-xs text-muted-foreground">
+            Filtrar por material
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {MATERIAL_OPTIONS.map((material) => (
+            <DropdownMenuCheckboxItem
+              key={material.value}
+              checked={selectedMaterials.includes(material.value)}
+              onCheckedChange={() => onToggleMaterial(material.value)}
+              onSelect={(e) => e.preventDefault()}
+            >
+              {material.label}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {/* Ordenar */}
       <div className="ml-auto">

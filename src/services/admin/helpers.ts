@@ -10,13 +10,7 @@ export function parseDateInput(dateString: string): Date | null {
 
   const trimmed = dateString.trim();
 
-  // Intentar parsear directamente con new Date() primero
-  const directParse = new Date(trimmed);
-  if (!isNaN(directParse.getTime())) {
-    return directParse;
-  }
-
-  // Si ya está en formato YYYY-MM-DD o ISO, intentar parsear directamente
+  // Try explicit formats FIRST to avoid ambiguous US-style parsing from new Date()
   if (trimmed.includes("-")) {
     // Verificar si es DD-MM-YYYY
     const ddmmyyyyMatch = trimmed.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
@@ -49,20 +43,32 @@ export function parseDateInput(dateString: string): Date | null {
     }
   }
 
+  // Fallback: ISO strings and other formats
+  const directParse = new Date(trimmed);
+  if (!isNaN(directParse.getTime())) {
+    return directParse;
+  }
+
   return null;
 }
 
 /**
- * Obtener token de autenticación de Cognito
+ * Obtener token de autenticación de Cognito.
+ * Throws if no token available instead of returning null.
  */
-export async function getAuthToken(): Promise<string | null> {
+export async function getAuthToken(): Promise<string> {
   try {
     const { fetchAuthSession } = await import("@aws-amplify/auth");
     const session = await fetchAuthSession();
-    return session.tokens?.idToken?.toString() || null;
+    const token = session.tokens?.idToken?.toString() || null;
+    if (!token) {
+      throw new Error("No hay sesión activa. Inicia sesión nuevamente.");
+    }
+    return token;
   } catch (error) {
+    if (error instanceof Error && error.message.includes("sesión")) throw error;
     console.error("Error getting auth token:", error);
-    return null;
+    throw new Error("No se pudo obtener el token de autenticación. Inicia sesión nuevamente.");
   }
 }
 

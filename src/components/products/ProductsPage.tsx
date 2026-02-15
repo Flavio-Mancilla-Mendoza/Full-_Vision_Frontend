@@ -4,14 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Home, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useProductsByGender, useDynamicFiltersForGender } from "@/hooks/useProductsByGender";
+import { useQuery } from "@tanstack/react-query";
+import { useProductsByGender } from "@/hooks/useProductsByGender";
 import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
 import { ProductsErrorFallback } from "@/components/common/ErrorFallback";
 import { FilterBar } from "@/components/products/FilterBar";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { Pagination } from "@/components/products/Pagination";
 import { transformProductForCart } from "@/lib/product-utils";
-import { calculateMinDiscount } from "@/lib/product-utils";
+import { getAllBrands } from "@/services/brands";
 import SEO from "@/components/common/SEO";
 import { IProduct } from "@/types/IProducts";
 
@@ -32,58 +33,56 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Estados de filtros simples
+  // Estados de filtros
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedDiscounts, setSelectedDiscounts] = useState<string[]>([]);
   const [priceMin, setPriceMin] = useState(0);
   const [priceMax, setPriceMax] = useState(999999);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"featured" | "price_asc" | "price_desc" | "discount">("featured");
   const [currentPage, setCurrentPage] = useState(1);
   const limit = 24;
 
-  // Cargar filtros disponibles del backend
-  const { data: filtersData, isLoading: isLoadingFilters } = useDynamicFiltersForGender(gender);
+  // Cargar marcas desde la API (simple, sin filtros dinámicos)
+  const { data: brandsData = [] } = useQuery({
+    queryKey: ["brands"],
+    queryFn: getAllBrands,
+    staleTime: 1000 * 60 * 30, // 30 minutos - las marcas no cambian frecuentemente
+    gcTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+  });
 
-  // Transformar datos del backend al formato FilterOption
-  const brandOptions = useMemo(() =>
-    (filtersData?.brands ?? []).map((b: { id: string; name: string; slug: string; count?: number }) => ({
-      value: b.id,
-      label: b.name,
-      count: b.count ?? 0,
-    })),
-    [filtersData?.brands]
-  );
-
-  const discountOptions = useMemo(() =>
-    (filtersData?.discounts ?? []).map((d: number) => ({
-      value: String(d),
-      label: `${d}% off`,
-      count: 0,
-    })),
-    [filtersData?.discounts]
+  const brandOptions = useMemo(
+    () => brandsData.map((b) => ({ value: b.name, label: b.name })),
+    [brandsData]
   );
 
   // Contar filtros activos
   const activeFiltersCount = useMemo(() => {
-    let count = selectedBrands.length + selectedDiscounts.length;
+    let count = selectedBrands.length + selectedColors.length + selectedShapes.length + selectedMaterials.length;
     if (priceMin > 0 || priceMax < 999999) count += 1;
     return count;
-  }, [selectedBrands, selectedDiscounts, priceMin, priceMax]);
+  }, [selectedBrands, selectedColors, selectedShapes, selectedMaterials, priceMin, priceMax]);
 
   // Construir filtros para el backend
-  const queryFilters = useMemo(
-    () => ({
+  const queryFilters = useMemo(() => {
+    const attributes: Record<string, string[]> = {};
+    if (selectedColors.length > 0) attributes.frame_color = selectedColors;
+    if (selectedShapes.length > 0) attributes.frame_style = selectedShapes;
+    if (selectedMaterials.length > 0) attributes.frame_material = selectedMaterials;
+
+    return {
       gender,
       brands: selectedBrands,
-      discount_min: calculateMinDiscount(selectedDiscounts),
       price_min: priceMin,
       price_max: priceMax,
+      attributes,
       sort_by: sortBy,
       page: currentPage,
       limit,
-    }),
-    [gender, selectedBrands, selectedDiscounts, priceMin, priceMax, sortBy, currentPage]
-  );
+    };
+  }, [gender, selectedBrands, priceMin, priceMax, selectedColors, selectedShapes, selectedMaterials, sortBy, currentPage]);
 
   // Query de productos
   const {
@@ -99,24 +98,16 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
   // Resetear a página 1 cuando cambian filtros u ordenamiento
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedBrands, selectedDiscounts, priceMin, priceMax, sortBy]);
+  }, [selectedBrands, selectedColors, selectedShapes, selectedMaterials, priceMin, priceMax, sortBy]);
 
   // Handlers
   const handleAddToCart = (product: IProduct) => {
     const opticalProduct = transformProductForCart(product);
-    addToCart({ productId: product.id, quantity: 1, product: opticalProduct });
+    addToCart({ productId: product.id, quantity: 1, product: opticalProduct as Parameters<typeof addToCart>[0]["product"] });
   };
 
-  const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
-  };
-
-  const toggleDiscount = (discount: string) => {
-    setSelectedDiscounts((prev) =>
-      prev.includes(discount) ? prev.filter((d) => d !== discount) : [...prev, discount]
-    );
+  const toggleArrayFilter = (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) => {
+    setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
   };
 
   const handlePriceChange = (min: number, max: number) => {
@@ -126,7 +117,9 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
 
   const clearFilters = () => {
     setSelectedBrands([]);
-    setSelectedDiscounts([]);
+    setSelectedColors([]);
+    setSelectedShapes([]);
+    setSelectedMaterials([]);
     setPriceMin(0);
     setPriceMax(999999);
   };
@@ -143,7 +136,7 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
   const hasMore = productsResponse?.hasMore ?? false;
 
   // Loading
-  if (isLoadingProducts || isLoadingFilters) {
+  if (isLoadingProducts) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -204,18 +197,20 @@ const ProductsPage: React.FC<ProductsPageProps> = ({
         {/* Barra de filtros horizontal */}
         <FilterBar
           brands={brandOptions}
-          discounts={discountOptions}
-          priceRange={filtersData?.priceRange ?? { min: 0, max: 1000 }}
           selectedBrands={selectedBrands}
-          selectedDiscounts={selectedDiscounts}
           priceMin={priceMin}
           priceMax={priceMax}
+          selectedColors={selectedColors}
+          selectedShapes={selectedShapes}
+          selectedMaterials={selectedMaterials}
           sortBy={sortBy}
           activeFiltersCount={activeFiltersCount}
-          onToggleBrand={toggleBrand}
-          onToggleDiscount={toggleDiscount}
-          onSortChange={(v) => setSortBy(v as typeof sortBy)}
+          onToggleBrand={toggleArrayFilter(setSelectedBrands)}
           onPriceChange={handlePriceChange}
+          onToggleColor={toggleArrayFilter(setSelectedColors)}
+          onToggleShape={toggleArrayFilter(setSelectedShapes)}
+          onToggleMaterial={toggleArrayFilter(setSelectedMaterials)}
+          onSortChange={(v) => setSortBy(v as typeof sortBy)}
           onClearFilters={clearFilters}
         />
 

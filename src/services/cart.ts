@@ -54,9 +54,9 @@ async function getCartItemsSimple(userId: string): Promise<CartItemWithProductLo
       return [];
     }
 
-    // Obtener productos separadamente con sus imágenes
+    // Obtener productos separadamente con sus imágenes y marca
     const productIds = cartItems.map((item) => item.product_id);
-    const { data: products, error: productsError } = await supabase.from("products").select("*, product_images(*)").in("id", productIds);
+    const { data: products, error: productsError } = await supabase.from("products").select("*, product_images(*), brand:brands(*)").in("id", productIds);
 
     if (productsError) {
       console.warn("Error fetching products:", productsError);

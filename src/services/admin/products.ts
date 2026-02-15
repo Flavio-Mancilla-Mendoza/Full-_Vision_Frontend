@@ -28,9 +28,13 @@ export async function getAllBrands(): Promise<Brand[]> {
  */
 export async function checkSKUExists(sku: string, excludeProductId?: string): Promise<boolean> {
   try {
+    const token = await getAuthToken();
     const res = await fetch(`${getApiUrl()}/products/check-sku`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ sku, excludeProductId }),
     });
     if (!res.ok) return false;
@@ -47,9 +51,13 @@ export async function checkSKUExists(sku: string, excludeProductId?: string): Pr
  */
 export async function checkSlugExists(slug: string, excludeProductId?: string): Promise<boolean> {
   try {
+    const token = await getAuthToken();
     const res = await fetch(`${getApiUrl()}/products/check-slug`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ slug, excludeProductId }),
     });
     if (!res.ok) return false;

@@ -127,6 +127,12 @@ export async function createUser(userData: {
       });
     } catch (profileError) {
       console.error("❌ Error creando perfil via API:", profileError);
+      // Profile creation failed — Cognito user exists but has no DB profile.
+      // Re-throw so the caller knows the operation partially failed.
+      throw new Error(
+        `Usuario creado en Cognito (${result.userSub}) pero falló la creación del perfil en la base de datos. ` +
+        `Contacte al administrador. Error: ${profileError instanceof Error ? profileError.message : String(profileError)}`
+      );
     }
 
     return {

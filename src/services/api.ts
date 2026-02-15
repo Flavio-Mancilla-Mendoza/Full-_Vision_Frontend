@@ -5,8 +5,12 @@
 
 import { getCurrentUser, fetchAuthSession } from "@aws-amplify/auth";
 
-// URL de API Gateway (se actualizará después del deploy)
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL || "https://your-api-id.execute-api.sa-east-1.amazonaws.com/dev";
+// URL de API Gateway
+const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
+
+if (!API_URL) {
+  console.error("⚠️ VITE_API_GATEWAY_URL no está configurada. Las llamadas a la API fallarán.");
+}
 
 // Feature flag: usar el proxy API/Lambda en lugar de llamadas directas a Supabase
 export const USE_PROXY_API = (import.meta.env.VITE_USE_PROXY_API || "false").toLowerCase() === "true";
