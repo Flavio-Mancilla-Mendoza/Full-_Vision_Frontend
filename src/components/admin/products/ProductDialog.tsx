@@ -1,22 +1,23 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { useToast } from "@/components/ui/use-toast";
 import { getProductImages } from "@/services/admin";
-import BrandSelector from "@/components/admin/products/BrandSelector";
 import { checkSKUExists, checkSlugExists } from "@/services/admin";
 import useProductForm from "@/hooks/useProductForm";
 import type { OpticalProduct } from "@/types";
 import type { DbProductImage as ProductImage } from "@/types";
 import type { ProductFormData } from "@/types/product-forms";
+
+import {
+  BasicInfoSection,
+  PricingStockSection,
+  ProductAttributesSection,
+  FeaturesTogglesSection,
+} from "./form";
 
 interface Props {
   open: boolean;
@@ -124,24 +125,24 @@ export const ProductDialog: React.FC<Props> = ({ open, onOpenChange, editingProd
         description: editingProduct.description || "",
         slug: editingProduct.slug,
         base_price: editingProduct.base_price,
-        discount_percentage: editingProduct.discount_percentage,
-        is_active: editingProduct.is_active,
-        stock_quantity: editingProduct.stock_quantity || 0,
-        min_stock_level: editingProduct.min_stock_level || 5,
-        sku: editingProduct.sku || "",
-        frame_material: editingProduct.frame_material || "",
-        lens_type: editingProduct.lens_type || "",
-        frame_style: editingProduct.frame_style || "",
-        frame_size: editingProduct.frame_size || "",
-        lens_color: editingProduct.lens_color || "",
-        frame_color: editingProduct.frame_color || "",
-        gender: editingProduct.gender || "unisex",
-        has_uv_protection: editingProduct.has_uv_protection,
-        has_blue_filter: editingProduct.has_blue_filter,
-        is_photochromic: editingProduct.is_photochromic,
-        has_anti_reflective: editingProduct.has_anti_reflective,
-        is_featured: editingProduct.is_featured,
-        is_bestseller: editingProduct.is_bestseller,
+        discount_percentage: editingProduct.discount_percentage ?? 0,
+        is_active: editingProduct.is_active ?? true,
+        stock_quantity: editingProduct.stock_quantity ?? 0,
+        min_stock_level: editingProduct.min_stock_level ?? 5,
+        sku: editingProduct.sku ?? "",
+        frame_material: editingProduct.frame_material ?? "",
+        lens_type: editingProduct.lens_type ?? "",
+        frame_style: editingProduct.frame_style ?? "",
+        frame_size: editingProduct.frame_size ?? "",
+        lens_color: editingProduct.lens_color ?? "",
+        frame_color: editingProduct.frame_color ?? "",
+        gender: editingProduct.gender ?? "unisex",
+        has_uv_protection: editingProduct.has_uv_protection ?? false,
+        has_blue_filter: editingProduct.has_blue_filter ?? false,
+        is_photochromic: editingProduct.is_photochromic ?? false,
+        has_anti_reflective: editingProduct.has_anti_reflective ?? false,
+        is_featured: editingProduct.is_featured ?? false,
+        is_bestseller: editingProduct.is_bestseller ?? false,
         image_url: editingProduct.image_url || "",
       });
       loadProductImages(editingProduct.id);
@@ -213,6 +214,13 @@ export const ProductDialog: React.FC<Props> = ({ open, onOpenChange, editingProd
     }
   };
 
+  const handleFormChange = useCallback(
+    (partial: Partial<ProductFormData>) => {
+      setFormData((prev) => ({ ...prev, ...partial }));
+    },
+    [setFormData],
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -224,364 +232,23 @@ export const ProductDialog: React.FC<Props> = ({ open, onOpenChange, editingProd
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">
-            {/* Información básica */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Nombre</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setFormData({ ...formData, name, slug: formData.slug || generateSlug(name) });
-                  }}
-                  required
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="sku">SKU</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="Ej: FV-RABA-AVD-M-A1B"
-                  />
-                  <Button type="button" variant="outline" size="sm" onClick={handleGenerateSKU} disabled={!formData.name || generatingSKU}>
-                    {generatingSKU ? (
-                      <>
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        Generando...
-                      </>
-                    ) : (
-                      "Generar"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  El SKU se genera automáticamente basado en el nombre y características del producto
-                </p>
-              </div>
-            </div>
+            <BasicInfoSection
+              formData={formData}
+              onChange={handleFormChange}
+              onGenerateSKU={handleGenerateSKU}
+              onGenerateSlug={handleGenerateSlug}
+              generatingSKU={generatingSKU}
+              generatingSlug={generatingSlug}
+              generateSlug={generateSlug}
+            />
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
+            <PricingStockSection formData={formData} onChange={handleFormChange} />
 
-            <div className="grid gap-2">
-              <Label htmlFor="slug">Slug (URL)</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="slug"
-                  value={formData.slug}
-                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                  placeholder="se-genera-automaticamente"
-                />
-                <Button type="button" variant="outline" size="sm" onClick={handleGenerateSlug} disabled={!formData.name || generatingSlug}>
-                  {generatingSlug ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      Generando...
-                    </>
-                  ) : (
-                    "Generar"
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                El slug se usa para la URL del producto: /productos/{formData.slug || "slug-del-producto"}
-              </p>
-            </div>
+            <ProductAttributesSection formData={formData} onChange={handleFormChange} />
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="base_price">Precio Base (S/)</Label>
-                  <Input
-                    id="base_price"
-                    type="text"
-                    placeholder="Ej: 100.00"
-                    value={formData.base_price > 0 ? formData.base_price.toString() : ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Solo permitir números y punto decimal
-                      if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                        setFormData({ ...formData, base_price: parseFloat(value) || 0 });
-                      }
-                    }}
-                    required
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="discount_percentage">Descuento (%)</Label>
-                  <Input
-                    id="discount_percentage"
-                    type="text"
-                    placeholder="Ej: 15"
-                    value={formData.discount_percentage > 0 ? formData.discount_percentage.toString() : ""}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Solo permitir números y punto decimal, máximo 100
-                      if (value === "" || (/^\d*\.?\d*$/.test(value) && parseFloat(value) <= 100)) {
-                        setFormData({ ...formData, discount_percentage: parseFloat(value) || 0 });
-                      }
-                    }}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Precio de Venta</Label>
-                  <div className="flex items-center h-10 px-3 bg-muted rounded-md">
-                    <span className="text-sm font-semibold">
-                      {formData.discount_percentage > 0
-                        ? new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
-                            formData.base_price * (1 - formData.discount_percentage / 100),
-                          )
-                        : new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(formData.base_price)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              {formData.discount_percentage > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="destructive" className="text-xs">
-                      {formData.discount_percentage}% OFF
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Ahorro:{" "}
-                      {new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
-                        formData.base_price * (formData.discount_percentage / 100),
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="stock_quantity">Stock</Label>
-                  <Input
-                    id="stock_quantity"
-                    type="number"
-                    min="0"
-                    value={formData.stock_quantity}
-                    onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="min_stock_level">Nivel Mínimo de Stock</Label>
-                  <Input
-                    id="min_stock_level"
-                    type="number"
-                    min="0"
-                    value={formData.min_stock_level}
-                    onChange={(e) => setFormData({ ...formData, min_stock_level: parseInt(e.target.value) || 5 })}
-                  />
-                </div>
-              </div>
-            </div>
+            <FeaturesTogglesSection formData={formData} onChange={handleFormChange} />
 
-            {/* Características del marco */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Características del Producto</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="frame_material">Material del Marco</Label>
-                  <Select
-                    value={formData.frame_material || ""}
-                    onValueChange={(v) => setFormData({ ...formData, frame_material: v })}
-                  >
-                    <SelectTrigger id="frame_material">
-                      <SelectValue placeholder="Seleccionar material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="acetato">Acetato</SelectItem>
-                      <SelectItem value="metal">Metal</SelectItem>
-                      <SelectItem value="titanio">Titanio</SelectItem>
-                      <SelectItem value="plastico">Plástico</SelectItem>
-                      <SelectItem value="nylon">Nylon</SelectItem>
-                      <SelectItem value="mixto">Mixto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="lens_type">Tipo de Lente</Label>
-                  <Select
-                    value={formData.lens_type || ""}
-                    onValueChange={(v) => setFormData({ ...formData, lens_type: v })}
-                  >
-                    <SelectTrigger id="lens_type">
-                      <SelectValue placeholder="Seleccionar tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sol">Sol</SelectItem>
-                      <SelectItem value="graduado">Graduado</SelectItem>
-                      <SelectItem value="fotocromático">Fotocromático</SelectItem>
-                      <SelectItem value="filtro-azul">Filtro Azul</SelectItem>
-                      <SelectItem value="lectura">Lectura</SelectItem>
-                      <SelectItem value="contacto">Contacto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="frame_style">Estilo del Marco</Label>
-                  <Select
-                    value={formData.frame_style || ""}
-                    onValueChange={(v) => setFormData({ ...formData, frame_style: v })}
-                  >
-                    <SelectTrigger id="frame_style">
-                      <SelectValue placeholder="Seleccionar estilo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="aviador">Aviador</SelectItem>
-                      <SelectItem value="rectangular">Rectangular</SelectItem>
-                      <SelectItem value="redondo">Redondo</SelectItem>
-                      <SelectItem value="cat-eye">Cat Eye</SelectItem>
-                      <SelectItem value="wayfarer">Wayfarer</SelectItem>
-                      <SelectItem value="deportivo">Deportivo</SelectItem>
-                      <SelectItem value="oversize">Oversize</SelectItem>
-                      <SelectItem value="sin-montura">Sin Montura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="frame_size">Tamaño del Marco</Label>
-                  <Select
-                    value={formData.frame_size || ""}
-                    onValueChange={(v) => setFormData({ ...formData, frame_size: v })}
-                  >
-                    <SelectTrigger id="frame_size">
-                      <SelectValue placeholder="Seleccionar tamaño" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="XS">XS - Extra Pequeño</SelectItem>
-                      <SelectItem value="S">S - Pequeño</SelectItem>
-                      <SelectItem value="M">M - Mediano</SelectItem>
-                      <SelectItem value="L">L - Grande</SelectItem>
-                      <SelectItem value="XL">XL - Extra Grande</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="lens_color">Color del Lente</Label>
-                  <Input
-                    id="lens_color"
-                    value={formData.lens_color}
-                    onChange={(e) => setFormData({ ...formData, lens_color: e.target.value })}
-                    placeholder="Ej: Transparente, Gris, Marrón"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="frame_color">Color del Marco</Label>
-                  <Input
-                    id="frame_color"
-                    value={formData.frame_color}
-                    onChange={(e) => setFormData({ ...formData, frame_color: e.target.value })}
-                    placeholder="Ej: Negro, Dorado, Azul"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Marca del producto */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Marca</h3>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="brand">Marca del Producto</Label>
-                  <BrandSelector
-                    value={formData.brand_id as string | undefined}
-                    onChange={(v) => setFormData({ ...formData, brand_id: v })}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Género y características especiales */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Características Especiales</h3>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="gender">Género</Label>
-                  <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona el género" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unisex">Unisex</SelectItem>
-                      <SelectItem value="hombre">Hombre</SelectItem>
-                      <SelectItem value="mujer">Mujer</SelectItem>
-                      <SelectItem value="niño">Niño</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="has_uv_protection"
-                      checked={formData.has_uv_protection}
-                      onCheckedChange={(checked) => setFormData({ ...formData, has_uv_protection: checked })}
-                    />
-                    <Label htmlFor="has_uv_protection">Protección UV</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="has_blue_filter"
-                      checked={formData.has_blue_filter}
-                      onCheckedChange={(checked) => setFormData({ ...formData, has_blue_filter: checked })}
-                    />
-                    <Label htmlFor="has_blue_filter">Filtro de Luz Azul</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="is_photochromic"
-                      checked={formData.is_photochromic}
-                      onCheckedChange={(checked) => setFormData({ ...formData, is_photochromic: checked })}
-                    />
-                    <Label htmlFor="is_photochromic">Fotocromático</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="has_anti_reflective"
-                      checked={formData.has_anti_reflective}
-                      onCheckedChange={(checked) => setFormData({ ...formData, has_anti_reflective: checked })}
-                    />
-                    <Label htmlFor="has_anti_reflective">Anti-reflejo</Label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Configuración de destacados */}
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Configuración de Destacados</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_featured"
-                    checked={formData.is_featured}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                  />
-                  <Label htmlFor="is_featured">Producto Destacado</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="is_bestseller"
-                    checked={formData.is_bestseller}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_bestseller: checked })}
-                  />
-                  <Label htmlFor="is_bestseller">Más Vendido</Label>
-                </div>
-              </div>
-            </div>
-
-            {/* Componente de subida de imágenes optimizado */}
+            {/* Imágenes */}
             <div className="border-t pt-6">
               <ImageUpload
                 productId={editingProduct?.id}
@@ -599,7 +266,7 @@ export const ProductDialog: React.FC<Props> = ({ open, onOpenChange, editingProd
               <Switch
                 id="is_active"
                 checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                onCheckedChange={(checked) => handleFormChange({ is_active: checked })}
               />
               <Label htmlFor="is_active">Producto activo</Label>
             </div>

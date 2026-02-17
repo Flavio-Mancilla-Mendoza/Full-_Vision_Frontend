@@ -34,6 +34,9 @@ export function useCartQuery() {
       if (error instanceof Error) {
         if (
           error.message.includes("autenticación") ||
+          error.message.includes("autenticado") ||
+          error.message.includes("Authentication") ||
+          error.message.includes("401") ||
           error.message.includes("permisos") ||
           error.message.includes("406")
         ) {

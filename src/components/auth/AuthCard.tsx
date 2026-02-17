@@ -123,10 +123,9 @@ export default function AuthCard() {
             }
             throw new Error(result.error);
           }
-          if (result.user) {
-            toast({ title: "Sesión iniciada exitosamente" });
-            navigate("/admin/dashboard", { replace: true });
-          }
+          // Login exitoso: result.success === true ya garantiza isSignedIn
+          toast({ title: "Sesión iniciada exitosamente" });
+          navigate("/", { replace: true });
           break;
         }
       }

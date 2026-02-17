@@ -93,6 +93,10 @@ export async function getCartItems(userId?: string): Promise<CartItemWithProduct
       const items = await cartApi.list();
       return items as CartItemWithProductLocal[];
     } catch (error) {
+      // Silenciar errores de autenticación — son esperados si no hay sesión
+      if (error instanceof Error && (error.message.includes("401") || error.message.includes("autenticado") || error.message.includes("Authentication"))) {
+        return [];
+      }
       console.error("Error al obtener carrito desde API Gateway:", error);
       return [];
     }

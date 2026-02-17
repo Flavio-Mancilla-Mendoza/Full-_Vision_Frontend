@@ -297,10 +297,11 @@ export async function getCurrentAuthUser(existingSession?: Awaited<ReturnType<ty
 
 /**
  * Obtener sesión actual
+ * @param forceRefresh - Si true, valida tokens con el servidor (no usa cache)
  */
-export async function getCurrentAuthSession(): Promise<AuthSession> {
+export async function getCurrentAuthSession(forceRefresh = false): Promise<AuthSession> {
   try {
-    const session = await fetchAuthSession();
+    const session = await fetchAuthSession({ forceRefresh });
 
     // Si no hay tokens válidos, no intentar obtener usuario
     if (!session.tokens?.accessToken) {

@@ -30,5 +30,5 @@
       "@full-vision/shared/*": ["./shared/src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "shared/src"]
 }

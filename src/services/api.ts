@@ -5,8 +5,8 @@
 
 import { getCurrentUser, fetchAuthSession } from "@aws-amplify/auth";
 
-// URL de API Gateway
-const API_URL = import.meta.env.VITE_API_GATEWAY_URL;
+// URL de API Gateway — normalizar (quitar trailing slash para evitar doble slash)
+const API_URL = (import.meta.env.VITE_API_GATEWAY_URL || "").replace(/\/+$/, "");
 
 if (!API_URL) {
   console.error("⚠️ VITE_API_GATEWAY_URL no está configurada. Las llamadas a la API fallarán.");
@@ -25,12 +25,52 @@ export function getApiUrl(): string {
 /**
  * Obtener JWT token de Cognito
  */
-async function getAuthToken(): Promise<string | null> {
+/**
+ * Decodificar un JWT y verificar si está expirado (sin validar firma)
+ */
+function isTokenExpired(token: string): boolean {
   try {
-    const session = await fetchAuthSession();
-    return session.tokens?.idToken?.toString() || null;
-  } catch (error) {
-    console.error("Error getting auth token:", error);
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // Margen de 30 segundos para evitar race conditions
+    return payload.exp * 1000 < Date.now() + 30_000;
+  } catch {
+    return true;
+  }
+}
+
+// Flag para forzar refresh en la primera llamada autenticada de la sesión
+let _hasValidatedSession = false;
+
+/**
+ * Obtener JWT token de Cognito válido
+ * - Primera llamada de la sesión: fuerza refresh para validar con el servidor
+ * - Llamadas siguientes: usa caché y solo refresca si exp expiró
+ */
+async function getAuthToken(forceRefresh = false): Promise<string | null> {
+  try {
+    // En la primera llamada autenticada, forzar refresh para validar server-side
+    const shouldForce = forceRefresh || !_hasValidatedSession;
+    const session = await fetchAuthSession({ forceRefresh: shouldForce });
+    const token = session.tokens?.idToken?.toString() || null;
+
+    if (!token) {
+      return null;
+    }
+
+    // Si forzamos refresh y obtuvimos token, la sesión es válida
+    if (shouldForce) {
+      _hasValidatedSession = true;
+    }
+
+    // Verificar expiración local para llamadas subsiguientes
+    if (!shouldForce && isTokenExpired(token)) {
+      return getAuthToken(true);
+    }
+
+    return token;
+  } catch {
+    // Si el refresh falla, la sesión no es válida
+    _hasValidatedSession = false;
     return null;
   }
 }
@@ -42,7 +82,7 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, requir
   const token = await getAuthToken();
 
   if (requireAuth && !token) {
-    throw new Error("Authentication required");
+    throw new Error("Usuario no autenticado");
   }
 
   const headers: Record<string, string> = {
@@ -52,14 +92,50 @@ async function apiRequest<T>(endpoint: string, options: RequestInit = {}, requir
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+
+    // 🔍 Debug: Inspeccionar token JWT
+    if (import.meta.env.DEV) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        console.debug("🔍 [apiRequest] Token debug:", {
+          endpoint,
+          fullUrl: `${API_URL}${endpoint}`,
+          token_use: payload.token_use,   // debe ser "id" para Cognito authorizer
+          iss: payload.iss,               // debe ser https://cognito-idp.<region>.amazonaws.com/<poolId>
+          aud: payload.aud,               // client ID
+          exp: new Date(payload.exp * 1000).toISOString(),
+          sub: payload.sub?.slice(0, 8) + "...",
+        });
+      } catch { /* ignore decode errors */ }
+    }
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  let response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers,
   });
 
+  // Si recibimos 401 y teníamos token, intentar refresh y reintentar UNA vez
+  if (response.status === 401 && token) {
+    if (import.meta.env.DEV) {
+      const errBody = await response.clone().text();
+      console.warn("🔍 [apiRequest] 401 response body:", errBody, "URL:", `${API_URL}${endpoint}`);
+    }
+    const freshToken = await getAuthToken(true);
+    if (freshToken && freshToken !== token) {
+      headers.Authorization = `Bearer ${freshToken}`;
+      response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+    }
+  }
+
   if (!response.ok) {
+    // Si sigue siendo 401 después del retry, resetear estado de sesión
+    if (response.status === 401) {
+      _hasValidatedSession = false;
+    }
     const errorText = await response.text();
     const errorData = (() => {
       try { return JSON.parse(errorText); } catch { return { error: response.statusText }; }

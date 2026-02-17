@@ -18,7 +18,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, isFeatured = 
   const [imageError, setImageError] = useState(false);
   const [showImageDetails, setShowImageDetails] = useState(false);
   const [imageKey, setImageKey] = useState(0);
-  const primaryImage = product.product_images?.filter((img) => img.is_primary)?.sort((a, b) => a.sort_order - b.sort_order)[0];
+  const primaryImage = product.product_images?.filter((img) => img.is_primary)?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0];
 
   const handleImageError = () => {
     setImageError(true);

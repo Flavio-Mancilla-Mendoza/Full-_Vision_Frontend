@@ -10,7 +10,9 @@ export const ProductPagination: React.FC<{
   setPage: (p: number) => void;
   setPageSize: (s: number) => void;
   isLoading: boolean;
-}> = ({ page, totalPages, totalCount, pageSize, setPage, setPageSize, isLoading }) => {
+  /** Etiqueta para el conteo, ej. "productos", "usuarios". Default: "registros" */
+  itemLabel?: string;
+}> = ({ page, totalPages, totalCount, pageSize, setPage, setPageSize, isLoading, itemLabel = "registros" }) => {
   return (
     <div className="flex items-center justify-between mt-4">
       <div className="flex items-center space-x-3">
@@ -19,7 +21,7 @@ export const ProductPagination: React.FC<{
         </Button>
         <div className="text-sm">
           Página <strong>{page}</strong> de <strong>{totalPages}</strong>
-          <span className="text-muted-foreground ml-2">— {totalCount} productos</span>
+          <span className="text-muted-foreground ml-2">— {totalCount} {itemLabel}</span>
         </div>
         <Button
           size="sm"

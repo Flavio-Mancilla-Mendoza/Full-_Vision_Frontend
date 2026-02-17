@@ -1,14 +1,22 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuthCognito";
 import { ReactNode } from "react";
+import IdleTimeoutGuard from "./IdleTimeoutGuard";
 
 interface AuthRequiredProps {
   children: ReactNode;
   redirectTo?: string;
   requireAdmin?: boolean;
+  /** Minutos de inactividad antes de cerrar sesión (default: 30) */
+  idleTimeoutMinutes?: number;
 }
 
-const AuthRequired = ({ children, redirectTo = "/login", requireAdmin = false }: AuthRequiredProps) => {
+const AuthRequired = ({
+  children,
+  redirectTo = "/login",
+  requireAdmin = false,
+  idleTimeoutMinutes = 30,
+}: AuthRequiredProps) => {
   const { isAuthenticated, loading, isAdmin } = useAuth();
   const location = useLocation();
 
@@ -28,7 +36,11 @@ const AuthRequired = ({ children, redirectTo = "/login", requireAdmin = false }:
     return <Navigate to="/" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <IdleTimeoutGuard timeoutMinutes={idleTimeoutMinutes} isAdmin={isAdmin}>
+      {children}
+    </IdleTimeoutGuard>
+  );
 };
 
 export default AuthRequired;

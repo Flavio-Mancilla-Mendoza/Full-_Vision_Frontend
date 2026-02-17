@@ -60,7 +60,7 @@ export const OrderDetailsContent: React.FC<{
         <div>
           <h3 className="font-semibold mb-3">Items</h3>
           <div className="bg-white rounded-lg border p-3 space-y-2">
-            {order.order_items.map((item) => (
+            {order.order_items?.map((item) => (
               <div key={item.id} className="flex items-center justify-between">
                 <div>
                   <div className="font-medium">{item.product?.name}</div>

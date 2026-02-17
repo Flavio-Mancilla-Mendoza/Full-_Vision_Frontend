@@ -13,7 +13,7 @@ export const FeaturedProductsPreview: React.FC<FeaturedProductsPreviewProps> = (
     <CardContent>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {featuredProducts.slice(0, 4).map((product) => {
-          const primaryImage = product.product_images?.filter((img) => img.is_primary)?.sort((a, b) => a.sort_order - b.sort_order)[0];
+          const primaryImage = product.product_images?.filter((img) => img.is_primary)?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0];
 
           return (
             <div key={product.id} className="bg-secondary/30 rounded-lg p-3">
