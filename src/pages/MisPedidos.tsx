@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserOrders } from "@/hooks/useOrders";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import SEO from "@/components/common/SEO";

@@ -115,7 +115,7 @@ export async function createUser(userData: {
     }
 
     // Crear el perfil via API Gateway (Lambda → Supabase SERVICE_ROLE)
-    let profileData = null;
+    let profileData: Awaited<ReturnType<typeof adminProfilesApi.create>> | null = null;
     try {
       profileData = await adminProfilesApi.create({
         id: result.userSub,
@@ -151,7 +151,7 @@ export async function createUser(userData: {
  * Actualizar usuario
  */
 export async function updateUser(userId: string, updates: Partial<UserProfile>) {
-  const data = await adminProfilesApi.update(userId, updates);
+  const data = await adminProfilesApi.update(userId, updates as unknown as Parameters<typeof adminProfilesApi.update>[1]);
 
   return {
     success: true,

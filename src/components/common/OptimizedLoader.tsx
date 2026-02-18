@@ -1,5 +1,5 @@
 import { ReactNode, useMemo } from "react";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface OptimizedLoaderProps {

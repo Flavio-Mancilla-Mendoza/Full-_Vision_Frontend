@@ -95,18 +95,13 @@ export function useHeroContent() {
       if (imageKey.startsWith("http")) {
         setOptimizedImageUrl(imageKey);
       } else {
-        // Si es solo el path, construir URL optimizada con transformaciones
+        // Si es solo el path, construir URL pública
         import("@/lib/supabase").then(({ supabase }) => {
-          const optimizedUrl = supabase.storage.from("site-content").getPublicUrl(imageKey, {
-            transform: {
-              width: 1920,
-              height: 650,
-              resize: "cover",
-              quality: 85,
-            },
-          }).data.publicUrl;
+          const { data } = supabase.storage.from("site-content").getPublicUrl(imageKey);
 
-          setOptimizedImageUrl(optimizedUrl);
+          if (data) {
+            setOptimizedImageUrl(data.publicURL);
+          }
         });
       }
     } else {

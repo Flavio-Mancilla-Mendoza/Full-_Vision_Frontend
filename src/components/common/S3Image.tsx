@@ -34,7 +34,11 @@ export function S3Image({ s3Key, url: directUrl, fallback, className, alt, ...pr
     // Obtener URL desde Supabase Storage usando s3Key
     try {
       const { data } = supabase.storage.from("product-images").getPublicUrl(s3Key);
-      setUrl(data.publicUrl);
+      if (!data) {
+        setError(true);
+        return;
+      }
+      setUrl(data.publicURL);
       setError(false);
     } catch (err) {
       console.error("S3Image - Error getting image URL:", err);

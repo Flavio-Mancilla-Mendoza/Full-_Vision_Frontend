@@ -99,7 +99,7 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
           };
           return updated;
         }
-        // Add new item
+        // Add new item (optimistic — replaced by real data on success)
         return [
           ...old,
           {
@@ -108,19 +108,20 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
             product_id: productId,
             quantity,
             product: {
-              id: product.id,
-              name: product.name,
-              base_price: product.base_price,
+              ...product,
               sale_price: product.sale_price ?? null,
               discount_percentage: product.discount_percentage ?? null,
               image_url: product.image_url ?? null,
               product_images: product.product_images ?? [],
               brand: product.brand ?? null,
               category: product.category ?? null,
-              stock: product.stock ?? 0,
-            },
+              stock_quantity: product.stock_quantity ?? 0,
+            } as unknown as CartItemWithProductLocal["product"],
+            prescription_details: null,
+            special_instructions: null,
             created_at: new Date().toISOString(),
-          } as CartItemWithProductLocal,
+            updated_at: new Date().toISOString(),
+          } satisfies Omit<CartItemWithProductLocal, "product"> & { product: unknown } as CartItemWithProductLocal,
         ];
       });
 

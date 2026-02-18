@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import SEO from "@/components/common/SEO";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 
 // Hero simple - carga inmediata para LCP
 import HeroSimple from "@/components/hero/HeroSimple";

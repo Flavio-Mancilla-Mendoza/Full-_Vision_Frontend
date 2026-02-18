@@ -63,7 +63,6 @@ const ProductCardComponent = ({
     solar: "Sol",
     "lente solar": "Sol",
     graduado: "Graduado",
-    "fotocromático": "Fotocromático",
     fotocromático: "Fotocromático",
     "filtro-azul": "Filtro Azul",
     "filtro azul": "Filtro Azul",

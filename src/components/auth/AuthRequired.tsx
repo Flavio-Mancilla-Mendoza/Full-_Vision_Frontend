@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuthCognito";
+import { useAuth } from "@/hooks/auth";
 import { ReactNode } from "react";
 import IdleTimeoutGuard from "./IdleTimeoutGuard";
 

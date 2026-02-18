@@ -48,6 +48,7 @@ export default function CartItemComponent({ item }: CartItemProps) {
 
   // Obtener primera imagen
   const productImage = product.image_url || product.product_images?.[0]?.url || "/placeholder-glasses.jpg";
+  const stock = product.stock_quantity ?? 0;
 
   const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity < 1) return;
@@ -188,17 +189,17 @@ export default function CartItemComponent({ item }: CartItemProps) {
         </div>
 
         {/* Stock warning */}
-        {product.stock_quantity <= 5 && product.stock_quantity > 0 && (
+        {stock <= 5 && stock > 0 && (
           <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-md">
             <div className="flex items-center gap-2 text-yellow-800 text-sm">
               <AlertTriangle className="w-4 h-4" />
-              <span>Solo quedan {product.stock_quantity} unidades disponibles</span>
+              <span>Solo quedan {stock} unidades disponibles</span>
             </div>
           </div>
         )}
 
         {/* Out of stock */}
-        {product.stock_quantity <= 0 && (
+        {stock <= 0 && (
           <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-md">
             <div className="flex items-center gap-2 text-red-800 text-sm">
               <AlertTriangle className="w-4 h-4" />

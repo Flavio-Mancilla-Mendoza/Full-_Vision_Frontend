@@ -1,7 +1,7 @@
 import { memo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShoppingCart } from "lucide-react";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { useHeroContent } from "@/hooks/useSiteContent";
 import { useNavigate } from "react-router-dom";
 
@@ -26,13 +26,13 @@ const HeroSimple = memo(() => {
   // Cache hero image URL for instant render on repeat visits
   useEffect(() => {
     if (heroImage) {
-      try { localStorage.setItem('hero_image_url', heroImage); } catch {}
+      try { localStorage.setItem('hero_image_url', heroImage); } catch { /* localStorage not available */ }
     }
   }, [heroImage]);
 
   // Use cached URL for immediate render while API loads
   const displayImage = heroImage || (() => {
-    try { return localStorage.getItem('hero_image_url'); } catch { return null; }
+    try { return localStorage.getItem('hero_image_url'); } catch { /* localStorage not available */ return null; }
   })();
 
   return (

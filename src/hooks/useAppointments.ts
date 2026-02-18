@@ -1,7 +1,7 @@
 // src/hooks/useAppointments.ts
 import { useState, useEffect, useCallback } from "react";
 import { appointmentsApi } from "@/services/appointments";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import type { UserAppointment } from "@/types/appointments";
 
 export function useAppointments() {

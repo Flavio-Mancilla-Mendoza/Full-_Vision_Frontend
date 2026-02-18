@@ -112,7 +112,7 @@ export async function getUserOrders(userId: string): Promise<Order[]> {
  * Crear nueva orden (vía API Gateway)
  */
 export async function createOrder(orderData: Omit<Order, "id" | "created_at" | "updated_at" | "order_items">) {
-  return (await ordersApi.create(orderData as Partial<Order>)) as unknown as Order;
+  return (await ordersApi.create(orderData as unknown as Parameters<typeof ordersApi.create>[0])) as unknown as Order;
 }
 
 /**
@@ -124,7 +124,7 @@ export async function updateOrderStatus(orderId: string, status: Order["status"]
     updateData.admin_notes = adminNotes;
   }
 
-  const updated = (await ordersApi.update(orderId, updateData as Partial<Order>)) as unknown as Order;
+  const updated = (await ordersApi.update(orderId, updateData as unknown as Parameters<typeof ordersApi.update>[1])) as unknown as Order;
   return updated;
 }
 

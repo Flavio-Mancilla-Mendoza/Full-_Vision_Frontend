@@ -1,7 +1,7 @@
 // src/pages/MisCitas.tsx
 import { useState } from "react";
 import { useAppointments } from "@/hooks/useAppointments";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

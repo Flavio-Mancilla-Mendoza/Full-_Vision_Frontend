@@ -1,6 +1,6 @@
 // src/pages/Citas.tsx
 import CreateAppointmentForm from "@/components/appointments/CreateAppointmentForm";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";

@@ -41,7 +41,7 @@ export function convertBestSellerToProduct(bestSeller: BestSellerProduct): IProd
     meta_description: null,
     created_at: null,
     updated_at: null,
-    image_url: bestSeller.image_url ?? null,
+    image_url: bestSeller.image_url,
     deleted_at: null,
     discount_percentage: bestSeller.discount_percentage ?? null,
     category: bestSeller.category_name
@@ -99,7 +99,7 @@ export function convertFeaturedToProduct(featured: FeaturedProduct): IProduct {
     meta_description: null,
     created_at: null,
     updated_at: null,
-    image_url: featured.image_url ?? null,
+    image_url: featured.image_url,
     deleted_at: null,
     discount_percentage: featured.discount_percentage ?? null,
     category: featured.category_name

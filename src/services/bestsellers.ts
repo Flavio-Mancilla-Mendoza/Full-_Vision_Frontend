@@ -25,7 +25,7 @@ export interface BestSellerProduct {
   gender?: string;
 
   // Imagen principal
-  image_url?: string;
+  image_url: string | null;
   image_alt?: string;
 
   // Estado del producto

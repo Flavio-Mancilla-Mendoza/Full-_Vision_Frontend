@@ -1,7 +1,7 @@
 // src/hooks/useOrders.ts - Hook para gestionar órdenes
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { getOrders, getOrder, type Order } from "@/services/orders";
 import { updateOrderStatus, getAllOrdersPaginated } from "@/services/admin";
 import { getApiUrl } from "@/services/api";

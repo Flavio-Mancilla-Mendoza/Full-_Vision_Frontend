@@ -8,7 +8,7 @@ import CartItem from "@/components/cart/CartItem";
 import CartSummary from "@/components/cart/CartSummary";
 import GuestCartNotice from "@/components/cart/GuestCartNotice";
 import { useOptimizedAuthCart as useAuthCart } from "@/hooks/useOptimizedAuthCart";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { ShoppingCart, ArrowLeft, Trash2, ShoppingBag, Heart, Package } from "lucide-react";
 
 export default function Cart() {

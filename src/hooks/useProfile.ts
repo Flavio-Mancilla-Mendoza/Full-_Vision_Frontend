@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { getProfile, updateProfile, updateAddress, updatePhone, isAdmin, type Profile } from "@/services/profile";
 
 /**

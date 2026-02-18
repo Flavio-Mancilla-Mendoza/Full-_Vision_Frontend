@@ -164,7 +164,7 @@ export interface Product {
   category_id?: string;
   brand_id?: string;
   stock_quantity?: number;
-  image_url?: string;
+  image_url: string | null;
   is_featured?: boolean;
   is_active?: boolean;
   is_bestseller?: boolean;

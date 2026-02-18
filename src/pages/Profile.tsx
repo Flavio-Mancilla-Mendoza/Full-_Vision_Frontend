@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@/hooks/useAuthCognito";
+import { useUser } from "@/hooks/auth";
 import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Phone, MapPin, Calendar, LogOut, Eye, Home } from "lucide-react";

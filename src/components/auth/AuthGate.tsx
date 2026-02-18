@@ -1,6 +1,6 @@
 // src/components/auth/AuthGate.tsx
 import { ReactNode, useEffect } from "react";
-import { useSession, useAuth } from "@/hooks/useAuthCognito";
+import { useSession, useAuth } from "@/hooks/auth";
 import { useNavigate } from "react-router-dom";
 
 export function AuthGate({ children }: { children: ReactNode }) {

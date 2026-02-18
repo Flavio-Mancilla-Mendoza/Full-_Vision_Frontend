@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
@@ -13,10 +12,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("⚠️ Supabase no está configurado. Usa API Gateway para todas las operaciones.");
 }
 
-export const supabase = createClient<Database>(url, key, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
+export const supabase = createClient(url, key, {
+  autoRefreshToken: true,
+  persistSession: true,
+  detectSessionInUrl: true,
 });

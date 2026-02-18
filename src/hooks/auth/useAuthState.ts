@@ -34,7 +34,7 @@ export interface AuthState {
 // Esto evita que N componentes usando useAuthState disparen N forceRefresh independientes.
 let _globalHasValidated = false;
 let _globalLoadPromise: Promise<void> | null = null;
-let _globalListeners = new Set<(s: AuthState) => void>();
+const _globalListeners = new Set<(s: AuthState) => void>();
 let _globalState: AuthState = { session: null, isAdmin: false, loading: true };
 let _hubRegistered = false;
 
