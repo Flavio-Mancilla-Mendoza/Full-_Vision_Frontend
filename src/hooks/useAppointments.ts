@@ -1,11 +1,11 @@
 // src/hooks/useAppointments.ts
 import { useState, useEffect, useCallback } from "react";
 import { appointmentsApi } from "@/services/appointments";
-import { useUser } from "@/hooks/auth";
+import { useAuth } from "@/hooks/auth";
 import type { UserAppointment } from "@/types/appointments";
 
 export function useAppointments() {
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated } = useAuth();
   const [appointments, setAppointments] = useState<UserAppointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

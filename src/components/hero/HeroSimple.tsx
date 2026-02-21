@@ -1,7 +1,7 @@
 import { memo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShoppingCart } from "lucide-react";
-import { useUser } from "@/hooks/auth";
+import { useAuth } from "@/hooks/auth";
 import { useHeroContent } from "@/hooks/useSiteContent";
 import { useNavigate } from "react-router-dom";
 
@@ -16,7 +16,7 @@ const STATIC_HERO_CONTENT = {
 };
 
 const HeroSimple = memo(() => {
-  const { isAuthenticated } = useUser();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { heroImage, heroTitle, heroSubtitle, heroImageAlt } = useHeroContent();
 

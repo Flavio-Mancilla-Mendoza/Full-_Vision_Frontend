@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Hub } from "@aws-amplify/core";
 import { getCurrentAuthSession, type User } from "@/services/cognito-auth";
-import { getUserRole, type UserRole } from "./authUtils";
+import { getUserRole, type UserRole, clearProfileCache } from "./authUtils";
 
 // Flag para debugging
 const DEBUG = import.meta.env.DEV;
@@ -108,6 +108,7 @@ export function useAuthState(): AuthState & { refresh: () => Promise<void> } {
           case "signedOut":
             debugLog("👋 Usuario cerró sesión");
             _globalHasValidated = false;
+            clearProfileCache();
             _broadcastState({ session: null, isAdmin: false, loading: false });
             break;
           case "tokenRefresh":

@@ -1,31 +1,47 @@
 // src/hooks/useSiteContent.ts
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getSiteContentBySection, getAllSiteContent, type SiteContent } from "@/services/siteContent";
 
 export type { SiteContent } from "@/services/siteContent";
 
+// ── Cache global de contenido por sección ──
+const _contentCache = new Map<string, SiteContent[]>();
+const _contentLoadPromises = new Map<string, Promise<SiteContent[]>>();
+
 export function useSiteContent(section?: string) {
-  const [content, setContent] = useState<SiteContent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = section || "__all__";
+  const [content, setContent] = useState<SiteContent[]>(() => _contentCache.get(cacheKey) || []);
+  const [loading, setLoading] = useState(!_contentCache.has(cacheKey));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Si ya está en cache, usar datos cacheados
+    if (_contentCache.has(cacheKey)) {
+      setContent(_contentCache.get(cacheKey)!);
+      setLoading(false);
+      return;
+    }
+
     async function fetchContent() {
       try {
         setLoading(true);
         setError(null);
-        let data: SiteContent[];
 
-        if (section && section.trim() !== "") {
-          // Obtener contenido por sección específica
-          data = await getSiteContentBySection(section);
-        } else {
-          // Si no hay sección, obtener todo el contenido
-          data = await getAllSiteContent();
+        // Deduplicar llamadas concurrentes
+        let promise = _contentLoadPromises.get(cacheKey);
+        if (!promise) {
+          promise = section && section.trim() !== ""
+            ? getSiteContentBySection(section)
+            : getAllSiteContent();
+          _contentLoadPromises.set(cacheKey, promise);
         }
 
+        const data = await promise;
+        _contentCache.set(cacheKey, data);
+        _contentLoadPromises.delete(cacheKey);
         setContent(data);
       } catch (err) {
+        _contentLoadPromises.delete(cacheKey);
         console.error("Error fetching site content:", err);
         setError(err instanceof Error ? err.message : "Error al cargar contenido del sitio");
       } finally {
@@ -34,35 +50,32 @@ export function useSiteContent(section?: string) {
     }
 
     fetchContent();
-  }, [section]);
+  }, [section, cacheKey]);
 
-  const getContentByKey = (key: string, fallback?: string): string => {
+  const getContentByKey = useCallback((key: string, fallback?: string): string => {
     const item = content.find((c) => c.key === key);
     return item?.value || fallback || "";
-  };
+  }, [content]);
 
-  const getContentMetadata = (key: string) => {
+  const getContentMetadata = useCallback((key: string) => {
     const item = content.find((c) => c.key === key);
     return item?.metadata || {};
-  };
+  }, [content]);
 
-  const getAltText = (key: string, fallback?: string): string => {
+  const getAltText = useCallback((key: string, fallback?: string): string => {
     const item = content.find((c) => c.key === key);
     return item?.alt_text || fallback || "";
-  };
+  }, [content]);
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     setLoading(true);
     setError(null);
+    _contentCache.delete(cacheKey);
     try {
-      let data: SiteContent[];
-
-      if (section && section.trim() !== "") {
-        data = await getSiteContentBySection(section);
-      } else {
-        data = await getAllSiteContent();
-      }
-
+      const data = section && section.trim() !== ""
+        ? await getSiteContentBySection(section)
+        : await getAllSiteContent();
+      _contentCache.set(cacheKey, data);
       setContent(data);
     } catch (err) {
       console.error("Error refetching site content:", err);
@@ -70,7 +83,7 @@ export function useSiteContent(section?: string) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [section, cacheKey]);
 
   return {
     content,
@@ -88,26 +101,30 @@ export function useHeroContent() {
   const { content, loading, error, getContentByKey, getAltText, refetch } = useSiteContent("hero");
   const [optimizedImageUrl, setOptimizedImageUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    const imageKey = getContentByKey("hero_background");
-    if (imageKey && imageKey.trim() !== "") {
-      // Si la URL ya está completa (publicUrl), usarla directamente
-      if (imageKey.startsWith("http")) {
-        setOptimizedImageUrl(imageKey);
-      } else {
-        // Si es solo el path, construir URL pública
-        import("@/lib/supabase").then(({ supabase }) => {
-          const { data } = supabase.storage.from("site-content").getPublicUrl(imageKey);
+  // Derivar imageKey de content directamente (estable)
+  const imageKey = useMemo(() => {
+    const item = content.find((c) => c.key === "hero_background");
+    return item?.value || "";
+  }, [content]);
 
-          if (data) {
-            setOptimizedImageUrl(data.publicURL);
-          }
-        });
-      }
-    } else {
+  useEffect(() => {
+    if (!imageKey || imageKey.trim() === "") {
       setOptimizedImageUrl(null);
+      return;
     }
-  }, [getContentByKey]);
+
+    if (imageKey.startsWith("http")) {
+      setOptimizedImageUrl(imageKey);
+    } else {
+      // Si es solo el path, construir URL pública
+      import("@/lib/supabase").then(({ supabase }) => {
+        const { data } = supabase.storage.from("site-content").getPublicUrl(imageKey);
+        if (data) {
+          setOptimizedImageUrl(data.publicURL);
+        }
+      });
+    }
+  }, [imageKey]);
 
   return {
     loading,

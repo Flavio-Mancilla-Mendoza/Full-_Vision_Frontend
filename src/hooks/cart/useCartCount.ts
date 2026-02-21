@@ -1,16 +1,16 @@
 // src/hooks/cart/useCartCount.ts - Contador optimizado del carrito
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUser } from "@/hooks/auth";
+import { useAuth } from "@/hooks/auth";
 import { countCartItems } from "./cartUtils";
 import type { CartItemWithProductLocal } from "@/services/cart";
 
 /**
  * Hook optimizado para obtener el contador del carrito
- * Usa datos del cache sin hacer nuevas queries
+ * Usa useAuth (ligero) en lugar de useUser (pesado) - solo necesita el userId del cache
  */
 export function useCartCount() {
-  const { user, loading: userLoading, isAuthenticated } = useUser();
+  const { user, loading: userLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
   // Obtener datos del cache

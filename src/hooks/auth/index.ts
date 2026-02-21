@@ -11,12 +11,48 @@
  *   - useIsAdmin(): Solo verifica si es admin
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuthState, type AuthSession, type AuthState } from "./useAuthState";
-import { getProfile, type UserProfile, type UserRole } from "./authUtils";
+import { getProfile, refreshProfile as refreshProfileUtil, clearProfileCache, type UserProfile, type UserRole } from "./authUtils";
 
 // Re-exportar tipos
 export type { AuthSession, AuthState, UserProfile, UserRole };
+
+// ── Global profile state (shared across all useUser instances) ──
+let _globalProfile: UserProfile | null = null;
+let _globalProfileLoading = true;
+let _globalProfilePromise: Promise<void> | null = null;
+const _profileListeners = new Set<(p: { user: UserProfile | null; loading: boolean }) => void>();
+
+function _broadcastProfile(user: UserProfile | null, loading: boolean) {
+  _globalProfile = user;
+  _globalProfileLoading = loading;
+  _profileListeners.forEach((fn) => fn({ user, loading }));
+}
+
+async function _loadGlobalProfile() {
+  if (_globalProfilePromise) return _globalProfilePromise;
+  _globalProfilePromise = (async () => {
+    try {
+      const profile = await getProfile();
+      _broadcastProfile(profile, false);
+    } catch {
+      _broadcastProfile(null, false);
+    } finally {
+      _globalProfilePromise = null;
+    }
+  })();
+  return _globalProfilePromise;
+}
+
+/** Reset profile state on sign out */
+export function resetProfileState() {
+  clearProfileCache();
+  _globalProfile = null;
+  _globalProfileLoading = true;
+  _globalProfilePromise = null;
+  _broadcastProfile(null, false);
+}
 
 /**
  * Hook principal de autenticación
@@ -47,50 +83,48 @@ export function useIsAdmin() {
 /**
  * Hook compatible con la API anterior de Supabase
  * Proporciona perfil completo con datos adicionales
+ * OPTIMIZADO: Todas las instancias comparten UN solo profile load (sin llamadas duplicadas a Cognito)
  */
 export function useUser() {
   const { session, isAdmin, loading: authLoading, refresh } = useAuthState();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileState, setProfileState] = useState<{ user: UserProfile | null; loading: boolean }>({
+    user: _globalProfile,
+    loading: _globalProfileLoading,
+  });
 
   useEffect(() => {
-    async function loadUserProfile() {
-      if (!session?.user) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
+    // Suscribir a actualizaciones del perfil global
+    _profileListeners.add(setProfileState);
 
-      try {
-        const profile = await getProfile();
-        setUser(profile);
-      } catch (error) {
-        console.error("Error cargando perfil de usuario:", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
+    if (!authLoading && session?.user) {
+      // Cargar perfil solo si el global no está cargado aún
+      if (_globalProfileLoading && !_globalProfilePromise) {
+        _loadGlobalProfile();
       }
+    } else if (!authLoading && !session?.user) {
+      // No hay sesión → limpiar perfil
+      _broadcastProfile(null, false);
     }
 
-    if (!authLoading) {
-      loadUserProfile();
-    }
+    return () => {
+      _profileListeners.delete(setProfileState);
+    };
   }, [session, authLoading]);
 
-  const refreshProfile = async () => {
-    if (session?.user) {
-      const profile = await getProfile();
-      setUser(profile);
-    }
-  };
+  const refreshProfileFn = useCallback(async () => {
+    clearProfileCache();
+    _globalProfilePromise = null;
+    _broadcastProfile(null, true);
+    await _loadGlobalProfile();
+  }, []);
 
   return {
-    user,
-    loading: authLoading || loading,
+    user: profileState.user,
+    loading: authLoading || profileState.loading,
     isAuthenticated: !!session?.user,
     isAdmin,
     session,
-    refreshProfile,
+    refreshProfile: refreshProfileFn,
     refresh,
   };
 }

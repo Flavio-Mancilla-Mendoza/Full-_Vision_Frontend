@@ -57,7 +57,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
             "react-core": ["react", "react-dom"],
             // Router - separado por lazy loading
             "react-router": ["react-router-dom"],
-            // UI library - chunking más granular
+            // UI library - single chunk (internal deps create circular refs if split)
             "radix-ui": [
               "@radix-ui/react-alert-dialog",
               "@radix-ui/react-avatar",
@@ -65,7 +65,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
               "@radix-ui/react-dialog",
               "@radix-ui/react-dropdown-menu",
               "@radix-ui/react-label",
-              "@radix-ui/react-navigation-menu",
               "@radix-ui/react-popover",
               "@radix-ui/react-progress",
               "@radix-ui/react-radio-group",
