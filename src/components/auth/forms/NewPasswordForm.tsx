@@ -1,73 +1,72 @@
 // src/components/auth/forms/NewPasswordForm.tsx
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import FormField from "../components/FormField";
 import PasswordInput from "../components/PasswordInput";
 import SubmitButton from "../components/SubmitButton";
-import type { AuthFormData, FormErrors } from "../hooks/useAuthValidation";
+import { newPasswordSchema, type NewPasswordFormData } from "../schemas/auth-schemas";
 
 interface NewPasswordFormProps {
-  formData: AuthFormData;
-  errors: FormErrors;
+  onSubmit: (data: NewPasswordFormData) => void;
   loading: boolean;
-  onInputChange: (field: keyof AuthFormData, value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
 }
 
 export default function NewPasswordForm({
-  formData,
-  errors,
-  loading,
-  onInputChange,
   onSubmit,
+  loading,
 }: NewPasswordFormProps) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<NewPasswordFormData>({
+    resolver: zodResolver(newPasswordSchema),
+    defaultValues: { fullName: "", newPassword: "", confirmNewPassword: "" },
+    mode: "onTouched",
+  });
+
+  const watchedPassword = watch("newPassword");
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <p className="text-sm text-blue-800">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 dark:border-blue-800 dark:bg-blue-950/50">
+        <p className="text-sm text-blue-800 dark:text-blue-200">
           <strong>Contraseña temporal detectada.</strong> Por seguridad, debes
           establecer una nueva contraseña permanente antes de continuar.
         </p>
       </div>
 
       <FormField
-        id="newPasswordFullName"
+        id="np-fullName"
         label="Nombre completo"
-        value={formData.newPasswordFullName}
-        onChange={(value) => onInputChange("newPasswordFullName", value)}
-        error={errors.newPasswordFullName}
         placeholder="Tu nombre completo"
         autoComplete="name"
+        error={errors.fullName?.message}
+        required
+        {...register("fullName")}
       />
 
       <PasswordInput
-        id="newPassword"
+        id="np-newPassword"
         label="Nueva contraseña"
-        value={formData.newPassword}
-        onChange={(value) => onInputChange("newPassword", value)}
-        error={errors.newPassword}
         autoComplete="new-password"
-        showHint
+        error={errors.newPassword?.message}
+        showStrength
+        strengthValue={watchedPassword}
+        required
+        {...register("newPassword")}
       />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmNewPassword">Confirmar nueva contraseña</Label>
-        <Input
-          id="confirmNewPassword"
-          type="password"
-          value={formData.confirmNewPassword}
-          onChange={(e) => onInputChange("confirmNewPassword", e.target.value)}
-          placeholder="Repite tu nueva contraseña"
-          autoComplete="new-password"
-          aria-invalid={!!errors.confirmNewPassword}
-          aria-describedby={errors.confirmNewPassword ? "confirmNewPassword-error" : undefined}
-        />
-        {errors.confirmNewPassword && (
-          <p id="confirmNewPassword-error" className="text-sm text-red-600">
-            {errors.confirmNewPassword}
-          </p>
-        )}
-      </div>
+      <PasswordInput
+        id="np-confirmNewPassword"
+        label="Confirmar nueva contraseña"
+        placeholder="Repite tu nueva contraseña"
+        autoComplete="new-password"
+        error={errors.confirmNewPassword?.message}
+        required
+        {...register("confirmNewPassword")}
+      />
 
       <SubmitButton
         loading={loading}

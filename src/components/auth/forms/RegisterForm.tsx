@@ -1,86 +1,81 @@
 // src/components/auth/forms/RegisterForm.tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import FormField from "../components/FormField";
 import PasswordInput from "../components/PasswordInput";
 import SubmitButton from "../components/SubmitButton";
-import type { AuthFormData, FormErrors } from "../hooks/useAuthValidation";
+import { registerSchema, type RegisterFormData } from "../schemas/auth-schemas";
 
 interface RegisterFormProps {
-  formData: AuthFormData;
-  errors: FormErrors;
+  onSubmit: (data: RegisterFormData) => void;
   loading: boolean;
-  onInputChange: (field: keyof AuthFormData, value: string) => void;
-  onSubmit: (e: React.FormEvent) => void;
   onSwitchMode: () => void;
 }
 
 export default function RegisterForm({
-  formData,
-  errors,
-  loading,
-  onInputChange,
   onSubmit,
+  loading,
   onSwitchMode,
 }: RegisterFormProps) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { fullName: "", email: "", password: "", confirmPassword: "" },
+    mode: "onTouched",
+  });
+
+  const watchedPassword = watch("password");
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       <FormField
-        id="fullName"
+        id="reg-fullName"
         label="Nombre completo"
-        value={formData.fullName}
-        onChange={(value) => onInputChange("fullName", value)}
-        error={errors.fullName}
         placeholder="Tu nombre completo"
         autoComplete="name"
+        error={errors.fullName?.message}
+        required
+        {...register("fullName")}
       />
 
       <FormField
-        id="email"
+        id="reg-email"
         label="Correo electrónico"
         type="email"
-        value={formData.email}
-        onChange={(value) => onInputChange("email", value)}
-        error={errors.email}
         placeholder="tu@ejemplo.com"
         autoComplete="email"
+        error={errors.email?.message}
+        required
+        {...register("email")}
       />
 
       <PasswordInput
-        id="password"
+        id="reg-password"
         label="Contraseña"
-        value={formData.password}
-        onChange={(value) => onInputChange("password", value)}
-        error={errors.password}
         autoComplete="new-password"
-        showHint
+        error={errors.password?.message}
+        showStrength
+        strengthValue={watchedPassword}
+        required
+        {...register("password")}
       />
 
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
-        <Input
-          id="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={(e) => onInputChange("confirmPassword", e.target.value)}
-          placeholder="Repite tu contraseña"
-          autoComplete="new-password"
-          aria-invalid={!!errors.confirmPassword}
-          aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
-        />
-        {errors.confirmPassword && (
-          <p id="confirmPassword-error" className="text-sm text-red-600">
-            {errors.confirmPassword}
-          </p>
-        )}
-      </div>
-
-      <SubmitButton
-        loading={loading}
-        loadingText="Procesando..."
-        text="Crear cuenta"
+      <PasswordInput
+        id="reg-confirmPassword"
+        label="Confirmar contraseña"
+        placeholder="Repite tu contraseña"
+        autoComplete="new-password"
+        error={errors.confirmPassword?.message}
+        required
+        {...register("confirmPassword")}
       />
+
+      <SubmitButton loading={loading} loadingText="Procesando..." text="Crear cuenta" />
 
       <div className="text-center">
         <Button type="button" variant="link" onClick={onSwitchMode} className="text-sm">

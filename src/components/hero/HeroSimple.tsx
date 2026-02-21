@@ -1,9 +1,12 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ShoppingCart } from "lucide-react";
 import { useUser } from "@/hooks/auth";
 import { useHeroContent } from "@/hooks/useSiteContent";
 import { useNavigate } from "react-router-dom";
+
+// URL estática del hero image en CloudFront - se precarga en index.html
+const STATIC_HERO_IMAGE = "https://dmnfd6b4vz00z.cloudfront.net/assets/heroimage-compressed.jpg";
 
 // Contenido estático para fallback
 const STATIC_HERO_CONTENT = {
@@ -16,7 +19,6 @@ const HeroSimple = memo(() => {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const { heroImage, heroTitle, heroSubtitle, heroImageAlt } = useHeroContent();
-  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Usar contenido dinámico de la base de datos
   const finalHeroTitle = heroTitle || STATIC_HERO_CONTENT.title;
@@ -30,9 +32,9 @@ const HeroSimple = memo(() => {
     }
   }, [heroImage]);
 
-  // Use cached URL for immediate render while API loads
+  // Prioridad: 1) imagen de la API, 2) cache en localStorage, 3) imagen estática en CloudFront
   const displayImage = heroImage || (() => {
-    try { return localStorage.getItem('hero_image_url'); } catch { /* localStorage not available */ return null; }
+    try { return localStorage.getItem('hero_image_url') || STATIC_HERO_IMAGE; } catch { return STATIC_HERO_IMAGE; }
   })();
 
   return (
@@ -41,24 +43,16 @@ const HeroSimple = memo(() => {
       <div className="absolute inset-0">
         {displayImage ? (
           <>
-            {/* Skeleton/Placeholder mientras carga */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-primary/20 to-accent/30">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/30 to-primary/60 animate-pulse" />
-              </div>
-            )}
-
             {/* Imagen hero - render inmediato para LCP óptimo */}
             <div className="w-full h-full relative">
               <img
                 src={displayImage}
                 alt={finalHeroImageAlt}
-                className={`w-full h-full object-cover object-top transition-opacity duration-300 ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
+                className="w-full h-full object-cover object-top"
+                loading="eager"
                 {...{ fetchpriority: "high" }}
-                decoding="sync"
-                onLoad={() => setImageLoaded(true)}
+                decoding="async"
+                sizes="100vw"
               />
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-primary/60 via-primary/30 to-primary/60" />

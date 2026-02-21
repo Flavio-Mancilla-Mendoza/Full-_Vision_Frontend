@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Package, Sparkles } from "lucide-react";
 import { getFeaturedProductsForHome, type FeaturedProduct } from "@/services/featured";
 import type { OpticalProduct } from "@/types";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useOptimizedAuthCart } from "@/hooks/cart";
 import { type CartItemWithProductLocal } from "@/services/cart";
 import { ProductCard } from "@/components/products/ProductCard";
 import { convertFeaturedToProduct } from "@/lib/productConverters";

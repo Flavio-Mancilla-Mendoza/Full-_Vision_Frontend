@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 import { S3Image } from "@/components/common/S3Image";
-import type { CartSummary } from "@/hooks/cart";
+import { calculateProductPrice, type CartSummary } from "@/hooks/cart";
 import type { CartItemWithProductLocal } from "@/services/cart";
 
 interface OrderSidebarProps {
@@ -39,7 +39,7 @@ export function OrderSidebar({ cartItems, cartSummary }: OrderSidebarProps) {
                 <p className="font-medium">{item.product?.name}</p>
                 <p className="text-muted-foreground">Cantidad: {item.quantity}</p>
                 <p className="font-semibold">
-                  S/ {((item.product?.sale_price || item.product?.base_price || 0) * item.quantity).toFixed(2)}
+                  S/ {(item.product ? calculateProductPrice(item.product) * item.quantity : 0).toFixed(2)}
                 </p>
               </div>
             </div>

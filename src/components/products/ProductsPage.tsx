@@ -6,7 +6,7 @@ import { Home, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useProductsByGender } from "@/hooks/useProductsByGender";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useOptimizedAuthCart } from "@/hooks/cart";
 import { ProductsErrorFallback } from "@/components/common/ErrorFallback";
 import { FilterBar } from "@/components/products/FilterBar";
 import { ProductGrid } from "@/components/products/ProductGrid";

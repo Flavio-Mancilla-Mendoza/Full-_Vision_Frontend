@@ -3,7 +3,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/hooks/auth";
 import { useAppointments } from "@/hooks/useAppointments";
-import { useOptimizedAuthCartCount as useAuthCartCount } from "@/hooks/useOptimizedAuthCart";
+import { useCartCount as useAuthCartCount } from "@/hooks/cart";
 import { useToast } from "@/hooks/use-toast";
 import { NAV_CONFIG, type NavItem } from "@/components/layout/navbar-config";
 

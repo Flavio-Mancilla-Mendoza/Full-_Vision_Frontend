@@ -1,11 +1,19 @@
 // src/pages/Login.tsx
 import AuthCard from "@/components/auth/AuthCard";
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
+import { useAuth } from "@/hooks/auth";
 
 export default function Login() {
   const location = useLocation();
+  const { isAuthenticated, loading } = useAuth();
   const wasIdleLogout = location.state?.reason === "idle";
+
+  // Si ya está autenticado, redirigir al inicio (o a la ruta original)
+  if (!loading && isAuthenticated) {
+    const from = (location.state as { from?: string })?.from || "/";
+    return <Navigate to={from} replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

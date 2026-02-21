@@ -1,11 +1,12 @@
 // src/pages/Checkout.tsx - Página de checkout (modularizada)
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useCart } from "@/hooks/cart";
 import { useCreateOrder } from "@/hooks/useOrders";
 import { useUser } from "@/hooks/auth";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, XCircle } from "lucide-react";
 import SEO from "@/components/common/SEO";
 import {
   StepIndicator,
@@ -23,8 +24,9 @@ import {
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, isAuthenticated } = useUser();
-  const { cartItems, cartSummary, isLoading: cartLoading } = useOptimizedAuthCart();
+  const { cartItems, cartSummary, isLoading: cartLoading } = useCart();
   const createOrderMutation = useCreateOrder();
 
   const [step, setStep] = useState<CheckoutStep>("shipping");
@@ -35,6 +37,9 @@ export default function Checkout() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [orderError, setOrderError] = useState<string | null>(null);
   const isSubmitting = createOrderMutation.isPending;
+
+  // Handle MercadoPago failure redirect back to checkout
+  const mpFailureOrderId = searchParams.get("payment") === "failure" ? searchParams.get("order") : null;
 
   // Redirigir si no está autenticado o no hay items
   useEffect(() => {
@@ -82,29 +87,37 @@ export default function Checkout() {
       // Si el método de pago es Mercado Pago, redirigir a su plataforma
       // El Lambda de MP consulta items y precios de la BD — no confiamos en el frontend
       if (paymentMethod === "mercadopago") {
-        const { createMercadoPagoPreference } = await import("../services/mercadopago");
+        try {
+          const { createMercadoPagoPreference } = await import("../services/mercadopago");
 
-        const preference = await createMercadoPagoPreference({
-          orderId: order.id,
-          payer: {
-            email: shippingInfo.email || user.email || "sin-email@example.com",
-            name: shippingInfo.name || user.full_name || "Cliente",
-            phone: shippingInfo.phone || undefined,
-          },
-        });
+          const preference = await createMercadoPagoPreference({
+            orderId: order.id,
+            payer: {
+              email: shippingInfo.email || user.email || "sin-email@example.com",
+              name: shippingInfo.name || user.full_name || "Cliente",
+              phone: shippingInfo.phone || undefined,
+            },
+          });
 
-        if (preference && preference.init_point) {
-          window.location.href = preference.init_point;
-        } else {
-          setOrderError("No se pudo obtener el enlace de pago. Intenta nuevamente.");
-          navigate(`/order-confirmation/${order.id}`);
+          if (preference?.init_point) {
+            window.location.href = preference.init_point;
+            return; // Avoid further navigation while redirecting
+          }
+        } catch (mpError) {
+          console.error("Error creating MercadoPago preference:", mpError);
         }
+        // MP preference failed — navigate to confirmation with failure flag
+        navigate(`/order-confirmation/${order.id}?payment=failure`);
       } else {
         navigate(`/order-confirmation/${order.id}`);
       }
     } catch (error) {
       console.error("Error creating order:", error);
-      setOrderError("Error al crear el pedido. Intenta nuevamente más tarde.");
+      setOrderError(
+        error instanceof Error
+          ? error.message
+          : "Error al crear el pedido. Intenta nuevamente más tarde."
+      );
     }
   };
 
@@ -130,6 +143,25 @@ export default function Checkout() {
           <h1 className="text-3xl font-bold">Finalizar Compra</h1>
           <p className="text-muted-foreground">Completa tu pedido en pocos pasos</p>
         </div>
+
+        {/* MP Payment Failure Banner */}
+        {mpFailureOrderId && (
+          <Alert className="mb-6 bg-red-50 border-red-200">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-900">
+              <strong>El pago no se completó.</strong> Tu pedido ya fue creado.
+              Puedes ver los detalles en{" "}
+              <Button
+                variant="link"
+                className="px-0 h-auto text-red-900 underline"
+                onClick={() => navigate(`/order-confirmation/${mpFailureOrderId}`)}
+              >
+                tu confirmación de pedido
+              </Button>{" "}
+              o intentar con un método de pago diferente.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Progress Steps */}
         <div className="mb-8">

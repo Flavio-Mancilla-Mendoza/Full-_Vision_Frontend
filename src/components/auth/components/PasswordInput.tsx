@@ -1,50 +1,61 @@
 // src/components/auth/components/PasswordInput.tsx
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import PasswordStrengthMeter from "./PasswordStrengthMeter";
 
-interface PasswordInputProps {
-  id: string;
+interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
   error?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  showHint?: boolean;
-  showToggle?: boolean;
+  /** Show strength meter with live checklist */
+  showStrength?: boolean;
+  /** Current value for the strength meter (use watch() from react-hook-form) */
+  strengthValue?: string;
 }
 
-export default function PasswordInput({
-  id,
-  label,
-  value,
-  onChange,
-  error,
-  placeholder = "Mínimo 8 caracteres",
-  autoComplete = "current-password",
-  showHint = false,
-  showToggle = true,
-}: PasswordInputProps) {
-  const [showPassword, setShowPassword] = useState(false);
+/**
+ * Password input with show/hide toggle, ARIA support, and optional strength meter.
+ * Compatible with react-hook-form register().
+ *
+ * Usage:
+ *   <PasswordInput label="Contraseña" error={errors.password?.message}
+ *     showStrength strengthValue={watchedPassword} {...register("password")} />
+ */
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
+  (
+    {
+      label,
+      error,
+      showStrength = false,
+      strengthValue = "",
+      id,
+      placeholder = "Mínimo 8 caracteres",
+      ...inputProps
+    },
+    ref
+  ) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const errorId = id ? `${id}-error` : undefined;
+    const hintId = id ? `${id}-hint` : undefined;
 
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input
-          id={id}
-          type={showPassword ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete={autoComplete}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-        />
-        {showToggle && (
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={id}>{label}</Label>
+        <div className="relative">
+          <Input
+            id={id}
+            ref={ref}
+            type={showPassword ? "text" : "password"}
+            placeholder={placeholder}
+            aria-invalid={!!error}
+            aria-describedby={
+              error ? errorId : showStrength ? hintId : undefined
+            }
+            aria-required={inputProps.required}
+            {...inputProps}
+          />
           <Button
             type="button"
             variant="ghost"
@@ -52,21 +63,29 @@ export default function PasswordInput({
             className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
             onClick={() => setShowPassword(!showPassword)}
             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            tabIndex={-1}
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
           </Button>
+        </div>
+        {error && (
+          <p id={errorId} role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+        {showStrength && !error && (
+          <div id={hintId}>
+            <PasswordStrengthMeter password={strengthValue} />
+          </div>
         )}
       </div>
-      {error && (
-        <p id={`${id}-error`} className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
-      {showHint && !error && (
-        <p className="text-xs text-muted-foreground">
-          Debe incluir mayúsculas, minúsculas, números y caracteres especiales
-        </p>
-      )}
-    </div>
-  );
-}
+    );
+  }
+);
+
+PasswordInput.displayName = "PasswordInput";
+export default PasswordInput;

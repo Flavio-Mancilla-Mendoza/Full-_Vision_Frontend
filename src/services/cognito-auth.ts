@@ -42,16 +42,32 @@ export interface AuthSession {
 
 /**
  * Registrar nuevo usuario
+ * Nota: El User Pool usa email como alias, por lo que el username
+ * debe ser un identificador único (no el email directamente).
+ * Generamos un username basado en el email con un sufijo único.
  */
 export async function registerUser(email: string, password: string, name?: string) {
   try {
+    // Generar un username único basado en el email (sin @)
+    // Cognito con AliasAttributes=email no permite email como username
+    const emailPrefix = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "");
+    const uniqueSuffix = Date.now().toString(36);
+    const username = `${emailPrefix}_${uniqueSuffix}`;
+
+    // Parsear nombre completo en given_name y family_name (requeridos por Cognito)
+    const nameParts = name ? name.trim().split(" ") : [];
+    const given_name = nameParts[0] || email.split("@")[0];
+    const family_name = nameParts.slice(1).join(" ") || given_name;
+
     const signUpInput: SignUpInput = {
-      username: email,
+      username,
       password,
       options: {
         userAttributes: {
           email,
-          ...(name && { name }),
+          name: name || given_name,
+          given_name,
+          family_name,
         },
       },
     };
@@ -61,13 +77,30 @@ export async function registerUser(email: string, password: string, name?: strin
     return {
       success: true,
       userId,
+      username, // Devolver el username generado para usarlo en la confirmación
       isComplete: isSignUpComplete,
       nextStep: nextStep.signUpStep,
       message: "Usuario registrado. Verifica tu email para confirmar la cuenta.",
     };
   } catch (error: unknown) {
     console.error("Error registrando usuario:", error);
-    const errorMessage = error instanceof Error ? error.message : "Error al registrar usuario";
+
+    let errorMessage = "Error al registrar usuario";
+
+    if (error && typeof error === "object" && "name" in error) {
+      if (error.name === "NotAuthorizedException" || (error instanceof Error && error.message?.includes("SignUp is not permitted"))) {
+        errorMessage = "El registro de nuevos usuarios no está habilitado. Contacta al administrador.";
+      } else if (error.name === "UsernameExistsException") {
+        errorMessage = "Ya existe una cuenta con este correo electrónico.";
+      } else if (error.name === "InvalidPasswordException") {
+        errorMessage = "La contraseña no cumple los requisitos de seguridad.";
+      } else if (error.name === "InvalidParameterException") {
+        errorMessage = "Los datos ingresados no son válidos. Verifica tu correo y contraseña.";
+      } else if (error instanceof Error && error.message) {
+        errorMessage = error.message;
+      }
+    }
+
     return {
       success: false,
       error: errorMessage,
@@ -174,11 +207,12 @@ export async function loginUser(email: string, password: string) {
         errorMessage = "Email o contraseña incorrectos";
       } else if (error.name === "UserNotFoundException") {
         errorMessage = "Usuario no encontrado";
+      } else if (error.name === "UserAlreadyAuthenticatedException") {
+        errorMessage = "Ya tienes una sesión activa";
+      } else if (error instanceof Error && error.message) {
+        // Solo usar el mensaje crudo si no se reconoció el error
+        errorMessage = error.message;
       }
-    }
-
-    if (error instanceof Error && error.message) {
-      errorMessage = error.message;
     }
 
     return {

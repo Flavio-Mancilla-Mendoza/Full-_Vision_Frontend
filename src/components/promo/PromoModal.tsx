@@ -76,7 +76,7 @@ const PromoModal = () => {
             src={promoBanner.value}
             alt={promoBanner.alt_text || "Promoción especial"}
             className="w-full h-full object-cover"
-            loading="eager"
+            loading="lazy"
             onClick={handleClose}
           />
         </div>

@@ -3,8 +3,8 @@ import App from "./App.tsx";
 import "./index.css";
 import { ConfirmProvider } from "@/components/ui/ConfirmDialog";
 
-// ⚠️ CRÍTICO: Configurar Amplify PRIMERO - Se ejecuta síncronamente
-import "./lib/amplify-setup";
+// Amplify se inicializa de forma diferida para no bloquear el render inicial
+// Se carga cuando se necesita auth (lazy import en AuthRequired)
 
 // Test de variables de entorno (temporal)
 // import "./test-env";
@@ -15,15 +15,26 @@ import "./lib/amplify-setup";
 // Test de productos CORREGIDO (sin brand) - FUNCIONANDO
 // import "./services/products-fixed";
 
-// Optimizaciones de performance críticas
-import { initializePerformanceOptimizations, enhancedWebVitalsMonitoring } from "@/utils/performance-optimizer";
+// Optimizaciones de performance - diferidas para no bloquear el render
+if (typeof requestIdleCallback !== "undefined") {
+  requestIdleCallback(() => {
+    import("@/utils/performance-optimizer").then(({ initializePerformanceOptimizations }) => {
+      initializePerformanceOptimizations();
+    });
+  });
+} else {
+  setTimeout(() => {
+    import("@/utils/performance-optimizer").then(({ initializePerformanceOptimizations }) => {
+      initializePerformanceOptimizations();
+    });
+  }, 0);
+}
 
-// Ejecutar optimizaciones antes de renderizar
-initializePerformanceOptimizations();
-
-// Monitoreo de performance
+// Monitoreo de Web Vitals - solo en desarrollo
 if (import.meta.env.DEV) {
-  enhancedWebVitalsMonitoring();
+  import("@/utils/performance-optimizer").then(({ enhancedWebVitalsMonitoring }) => {
+    enhancedWebVitalsMonitoring();
+  });
 }
 
 createRoot(document.getElementById("root")!).render(

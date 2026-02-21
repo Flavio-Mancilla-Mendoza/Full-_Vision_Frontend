@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShoppingCart, X, ArrowRight, Package, Plus, Minus, Trash2 } from "lucide-react";
-import { useOptimizedAuthCart as useAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useAuthCart } from "@/hooks/cart";
 import { useCartDrawer } from "@/hooks/useCartDrawer";
 import { CartItemWithProductLocal } from "@/services/cart";
 import { formatCurrency } from "@/lib/utils";

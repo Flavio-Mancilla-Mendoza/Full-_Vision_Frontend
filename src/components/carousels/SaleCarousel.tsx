@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
 import { ProductCard } from "@/components/products/ProductCard";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useOptimizedAuthCart } from "@/hooks/cart";
 import type { OpticalProduct } from "@/types";
 import { getLiquidacionProducts, LiquidacionProduct, calculateFinalPrice, calculateDiscountPercentage } from "@/services/liquidacion";
 import { convertLiquidacionToProduct } from "@/lib/productConverters";

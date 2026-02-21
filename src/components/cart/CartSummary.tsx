@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, Truck, Receipt } from "lucide-react";
-import { useOptimizedAuthCart as useAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useAuthCart } from "@/hooks/cart";
 import { formatCartPrice } from "@/services/cart";
 
 interface CartSummaryProps {

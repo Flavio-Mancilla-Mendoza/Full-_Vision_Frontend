@@ -1,51 +1,29 @@
 // src/pages/OrderConfirmation.tsx - Página de confirmación de orden
-import { useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { getOrder } from "@/services/orders";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, Package, Home, ShoppingBag } from "lucide-react";
+import { CheckCircle2, Package, Home, ShoppingBag, Clock, XCircle } from "lucide-react";
 import SEO from "@/components/common/SEO";
-import type { Order } from "@/services/admin";
+import type { Order } from "@/types";
+
+type PaymentQueryStatus = "success" | "pending" | "failure" | null;
 
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const paymentStatus = (searchParams.get("payment") as PaymentQueryStatus) || null;
 
   const { data: order, isLoading } = useQuery<Order>({
     queryKey: ["order", orderId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          `
-          *,
-          order_items(
-            *,
-            product:products(
-              *,
-              product_images(*)
-            )
-          )
-        `
-        )
-        .eq("id", orderId)
-        .single();
-
-      if (error) throw error;
-      return data as Order;
-    },
+    queryFn: () => getOrder(orderId!),
     enabled: !!orderId,
+    refetchInterval: paymentStatus === "pending" ? 10_000 : false, // Poll while payment pending
   });
-
-  useEffect(() => {
-    // Confetti effect cuando se carga la página
-    if (order) {
-      // Aquí podrías agregar confetti o animación de éxito
-    }
-  }, [order]);
 
   if (isLoading) {
     return (
@@ -78,13 +56,51 @@ export default function OrderConfirmation() {
       <SEO title="Pedido Confirmado - Full Vision" description="Tu pedido ha sido confirmado exitosamente" />
 
       <div className="container max-w-3xl mx-auto px-4">
+        {/* Payment Status Banner */}
+        {paymentStatus === "failure" && (
+          <Alert className="mb-6 bg-red-50 border-red-200">
+            <XCircle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-900">
+              <strong>El pago no se completó.</strong> Tu pedido fue creado pero el pago falló.
+              Puedes intentar pagar nuevamente desde &quot;Mis Pedidos&quot; o contactarnos para asistencia.
+            </AlertDescription>
+          </Alert>
+        )}
+        {paymentStatus === "pending" && (
+          <Alert className="mb-6 bg-yellow-50 border-yellow-200">
+            <Clock className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-900">
+              <strong>Pago en proceso.</strong> Tu pago está siendo verificado.
+              Esta página se actualizará automáticamente cuando se confirme.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Success Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
-            <CheckCircle2 className="w-10 h-10 text-green-600" />
+          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${
+            paymentStatus === "failure" ? "bg-red-100" : paymentStatus === "pending" ? "bg-yellow-100" : "bg-green-100"
+          }`}>
+            {paymentStatus === "failure" ? (
+              <XCircle className="w-10 h-10 text-red-600" />
+            ) : paymentStatus === "pending" ? (
+              <Clock className="w-10 h-10 text-yellow-600" />
+            ) : (
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            )}
           </div>
-          <h1 className="text-3xl font-bold mb-2">¡Pedido Confirmado!</h1>
-          <p className="text-muted-foreground text-lg">Gracias por tu compra. Hemos recibido tu pedido correctamente.</p>
+          <h1 className="text-3xl font-bold mb-2">
+            {paymentStatus === "failure" ? "Pedido Creado — Pago Pendiente" :
+             paymentStatus === "pending" ? "Pedido Recibido — Verificando Pago" :
+             "¡Pedido Confirmado!"}
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            {paymentStatus === "failure"
+              ? "Tu pedido fue registrado. Completa el pago para que podamos procesarlo."
+              : paymentStatus === "pending"
+              ? "Estamos verificando tu pago. Te notificaremos cuando se confirme."
+              : "Gracias por tu compra. Hemos recibido tu pedido correctamente."}
+          </p>
         </div>
 
         {/* Order Number */}
@@ -186,14 +202,28 @@ export default function OrderConfirmation() {
             </div>
 
             {/* Payment Info */}
-            {order.admin_notes && (
-              <div className="pt-4 border-t">
-                <h3 className="font-semibold mb-3">Método de Pago</h3>
-                <div className="bg-gray-50 rounded-lg p-4 text-sm">
-                  <p>{order.admin_notes}</p>
-                </div>
+            <div className="pt-4 border-t">
+              <h3 className="font-semibold mb-3">Método de Pago</h3>
+              <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
+                <p>{order.admin_notes || "No especificado"}</p>
+                {order.payment_status && (
+                  <p className="mt-2">
+                    <strong>Estado del pago:</strong>{" "}
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      order.payment_status === "approved" ? "bg-green-100 text-green-800" :
+                      order.payment_status === "pending" || order.payment_status === "in_process" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-red-100 text-red-800"
+                    }`}>
+                      {order.payment_status === "approved" ? "Aprobado" :
+                       order.payment_status === "pending" ? "Pendiente" :
+                       order.payment_status === "in_process" ? "En proceso" :
+                       order.payment_status === "rejected" ? "Rechazado" :
+                       order.payment_status}
+                    </span>
+                  </p>
+                )}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 

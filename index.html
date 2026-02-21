@@ -8,6 +8,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Full Vision</title>
     <meta name="description" content="Sistema de gestión Full Vision" />
+    <!-- Preload hero image solo en homepage para LCP instantáneo -->
+    <script>
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        var l = document.createElement('link');
+        l.rel = 'preload';
+        l.as = 'image';
+        l.type = 'image/jpeg';
+        l.href = 'https://dmnfd6b4vz00z.cloudfront.net/assets/heroimage-compressed.jpg';
+        l.fetchPriority = 'high';
+        document.head.appendChild(l);
+      }
+    </script>
     <!-- Preconnect to critical domains for faster LCP -->
     <link rel="preconnect" href="https://slrrvl1zs2.execute-api.sa-east-1.amazonaws.com" crossorigin />
     <link rel="preconnect" href="https://dmnfd6b4vz00z.cloudfront.net" crossorigin />

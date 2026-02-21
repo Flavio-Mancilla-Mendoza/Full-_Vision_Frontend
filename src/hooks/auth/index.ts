@@ -87,7 +87,7 @@ export function useUser() {
   return {
     user,
     loading: authLoading || loading,
-    isAuthenticated: !!session,
+    isAuthenticated: !!session?.user,
     isAdmin,
     session,
     refreshProfile,

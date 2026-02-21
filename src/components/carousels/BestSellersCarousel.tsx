@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, TrendingUp } from "lucide-react";
 import { getBestSellersForCarousel, getBestSellerBadge, getBestSellerBadgeColor, type BestSellerProduct } from "@/services/bestsellers";
 import type { OpticalProduct } from "@/types";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useOptimizedAuthCart } from "@/hooks/cart";
 import { type CartItemWithProductLocal } from "@/services/cart";
 import { ProductCard } from "@/components/products/ProductCard";
 import { Card, CardContent } from "@/components/ui/card";

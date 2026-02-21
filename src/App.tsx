@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense, useState } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -6,10 +6,12 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SplashScreen } from "@/components/common/SplashScreen";
-import AuthRequired from "./components/auth/AuthRequired";
+// SplashScreen removido - bloqueaba LCP por ~700ms
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useGoogleAnalytics } from "@/hooks/useGoogleAnalytics";
+
+// AuthRequired - lazy load para no cargar aws-amplify/auth en el bundle inicial
+const AuthRequired = lazy(() => import("./components/auth/AuthRequired"));
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -206,8 +208,6 @@ const AppRoutes = () => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
-
   // Initialize service worker
   useServiceWorker();
 
@@ -221,11 +221,6 @@ const App = () => {
       });
     }
   }, []);
-
-  // Mostrar splash screen mientras carga
-  if (showSplash) {
-    return <SplashScreen onLoadComplete={() => setShowSplash(false)} />;
-  }
 
   return (
     <ErrorBoundary>

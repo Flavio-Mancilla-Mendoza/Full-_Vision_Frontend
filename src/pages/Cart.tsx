@@ -7,7 +7,7 @@ import SEO from "@/components/common/SEO";
 import CartItem from "@/components/cart/CartItem";
 import CartSummary from "@/components/cart/CartSummary";
 import GuestCartNotice from "@/components/cart/GuestCartNotice";
-import { useOptimizedAuthCart as useAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useAuthCart } from "@/hooks/cart";
 import { useUser } from "@/hooks/auth";
 import { ShoppingCart, ArrowLeft, Trash2, ShoppingBag, Heart, Package } from "lucide-react";
 

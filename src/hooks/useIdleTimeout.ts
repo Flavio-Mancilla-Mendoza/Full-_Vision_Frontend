@@ -127,7 +127,8 @@ export function useIdleTimeout({
         document.removeEventListener(event, handleActivity);
       });
     };
-  }, [enabled, resetTimer, clearAllTimers, showWarning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, resetTimer, clearAllTimers]);
 
   return { showWarning, remainingSeconds, resetTimer };
 }

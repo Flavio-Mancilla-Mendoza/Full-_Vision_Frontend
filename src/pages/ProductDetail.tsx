@@ -18,7 +18,7 @@ import {
   Store,
 } from "lucide-react";
 import { useProductDetail } from "@/hooks/useProductDetail";
-import { useOptimizedAuthCart } from "@/hooks/useOptimizedAuthCart";
+import { useCart as useOptimizedAuthCart } from "@/hooks/cart";
 import {
   transformProductForCart,
   calculateFinalPrice,

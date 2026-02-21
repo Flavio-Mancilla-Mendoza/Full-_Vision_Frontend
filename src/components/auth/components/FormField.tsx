@@ -1,56 +1,51 @@
 // src/components/auth/components/FormField.tsx
+import { forwardRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-interface FormFieldProps {
-  id: string;
+interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
-  type?: string;
-  value: string;
-  onChange: (value: string) => void;
   error?: string;
-  placeholder?: string;
-  autoComplete?: string;
-  maxLength?: number;
   hint?: string;
 }
 
-export default function FormField({
-  id,
-  label,
-  type = "text",
-  value,
-  onChange,
-  error,
-  placeholder,
-  autoComplete,
-  maxLength,
-  hint,
-}: FormFieldProps) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        maxLength={maxLength}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
-      />
-      {error && (
-        <p id={`${id}-error`} className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
-      {hint && !error && (
-        <p id={`${id}-hint`} className="text-sm text-muted-foreground">
-          {hint}
-        </p>
-      )}
-    </div>
-  );
-}
+/**
+ * Form field with label, error, and hint — compatible with react-hook-form register().
+ *
+ * Usage:
+ *   <FormField label="Email" error={errors.email?.message} {...register("email")} />
+ */
+const FormField = forwardRef<HTMLInputElement, FormFieldProps>(
+  ({ label, error, hint, id, className, ...inputProps }, ref) => {
+    const errorId = id ? `${id}-error` : undefined;
+    const hintId = id ? `${id}-hint` : undefined;
+
+    return (
+      <div className="space-y-2">
+        <Label htmlFor={id}>{label}</Label>
+        <Input
+          id={id}
+          ref={ref}
+          aria-invalid={!!error}
+          aria-describedby={error ? errorId : hint ? hintId : undefined}
+          aria-required={inputProps.required}
+          className={className}
+          {...inputProps}
+        />
+        {error && (
+          <p id={errorId} role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+        {hint && !error && (
+          <p id={hintId} className="text-sm text-muted-foreground">
+            {hint}
+          </p>
+        )}
+      </div>
+    );
+  }
+);
+
+FormField.displayName = "FormField";
+export default FormField;

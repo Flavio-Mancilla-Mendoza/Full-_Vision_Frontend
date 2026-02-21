@@ -123,6 +123,10 @@ export interface Order extends Omit<DbOrder, "status"> {
   status: OrderStatus;
   order_items?: OrderItem[];
   customer_dni?: string | null; // Campo opcional para pedidos con retiro en tienda
+  // Payment fields — set by MP webhook / checkout Lambda (may be absent in older orders)
+  payment_method?: string | null;
+  payment_status?: string | null;
+  transaction_id?: string | null;
 }
 
 // Item de orden
