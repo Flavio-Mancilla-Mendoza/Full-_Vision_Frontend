@@ -327,6 +327,10 @@ export class ApiGatewayStack extends cdk.Stack {
     ordersResource.addMethod("GET", productsIntegration, authOptions);
     ordersResource.addMethod("POST", productsIntegration, authOptions);
 
+    // /orders/checkout - explicit resource BEFORE {id} so POST /orders/checkout works
+    const ordersCheckout = ordersResource.addResource("checkout");
+    ordersCheckout.addMethod("POST", productsIntegration, authOptions);
+
     // /orders/{id}
     const orderById = ordersResource.addResource("{id}");
     orderById.addMethod("GET", productsIntegration, authOptions);
