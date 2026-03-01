@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
 import { calculateProductPrice, type CartSummary } from "@/hooks/cart";
 import type { CartItemWithProductLocal } from "@/services/cart";
+import type { DeliveryMethod } from "./types";
 
 /** Obtiene la URL de imagen del producto con fallback */
 function getProductImageUrl(product: CartItemWithProductLocal["product"]): string | null {
@@ -16,9 +17,15 @@ function getProductImageUrl(product: CartItemWithProductLocal["product"]): strin
 interface OrderSidebarProps {
   cartItems: CartItemWithProductLocal[];
   cartSummary: CartSummary | null;
+  deliveryMethod?: DeliveryMethod;
 }
 
-export function OrderSidebar({ cartItems, cartSummary }: OrderSidebarProps) {
+export function OrderSidebar({ cartItems, cartSummary, deliveryMethod = "shipping" }: OrderSidebarProps) {
+  // Override shipping cost: pickup = free, shipping = whatever cartSummary says
+  const effectiveShipping = deliveryMethod === "pickup" ? 0 : (cartSummary?.shipping || 0);
+  const effectiveTotal = deliveryMethod === "pickup"
+    ? (cartSummary ? (cartSummary.total - (cartSummary.shipping || 0)) : 0)
+    : (cartSummary?.total || 0);
   return (
     <Card className="sticky top-4">
       <CardHeader>
@@ -69,23 +76,28 @@ export function OrderSidebar({ cartItems, cartSummary }: OrderSidebarProps) {
               <span>S/ {(cartSummary.tax || 0).toFixed(2)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Envío</span>
-              <span>{(cartSummary.shipping || 0) === 0 ? "GRATIS" : `S/ ${(cartSummary.shipping || 0).toFixed(2)}`}</span>
+              <span>{deliveryMethod === "pickup" ? "Retiro en tienda" : "Envío"}</span>
+              <span>{effectiveShipping === 0 ? "GRATIS" : `S/ ${effectiveShipping.toFixed(2)}`}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">
               <span>Total</span>
-              <span>S/ {(cartSummary.total || 0).toFixed(2)}</span>
+              <span>S/ {effectiveTotal.toFixed(2)}</span>
             </div>
           </div>
         )}
 
-        {cartSummary && cartSummary.subtotal >= 300 && (
+        {deliveryMethod === "pickup" ? (
+          <Alert className="bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">Retiro en tienda — sin costo de envío</AlertDescription>
+          </Alert>
+        ) : cartSummary && cartSummary.subtotal >= 300 ? (
           <Alert className="bg-green-50 border-green-200">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-700">¡Envío gratis en tu pedido!</AlertDescription>
           </Alert>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

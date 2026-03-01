@@ -48,8 +48,6 @@ export interface CreatePreferenceRequest {
  */
 export async function createMercadoPagoPreference(request: CreatePreferenceRequest): Promise<MercadoPagoPreference> {
   try {
-    const baseUrl = window.location.origin;
-
     // Llamar a Lambda vía API Gateway que crea la preferencia
     const token = await getAuthToken();
     const response = await fetch(`${API_URL}/mercadopago/create-preference`, {
@@ -61,13 +59,7 @@ export async function createMercadoPagoPreference(request: CreatePreferenceReque
       body: JSON.stringify({
         orderId: request.orderId,
         payer: request.payer,
-        // URLs de retorno
-        back_urls: {
-          success: `${baseUrl}/order-confirmation/${request.orderId}?payment=success`,
-          failure: `${baseUrl}/checkout?payment=failure&order=${request.orderId}`,
-          pending: `${baseUrl}/order-confirmation/${request.orderId}?payment=pending`,
-        },
-        auto_return: "approved", // Redirige automáticamente si se aprueba
+        // back_urls y auto_return se configuran server-side con FRONTEND_URL
       }),
     });
 

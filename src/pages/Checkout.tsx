@@ -77,6 +77,7 @@ export default function Checkout() {
         userId: user.id,
         cartItems,
         shippingInfo,
+        deliveryMethod,
         paymentMethod: "mercadopago",
         customerNotes: customerNotes || undefined,
       });
@@ -95,7 +96,11 @@ export default function Checkout() {
         });
 
         if (preference?.init_point) {
-          window.location.href = preference.init_point;
+          // En desarrollo usar sandbox, en producción usar init_point
+          const mpUrl = import.meta.env.DEV
+            ? (preference.sandbox_init_point || preference.init_point)
+            : preference.init_point;
+          window.location.href = mpUrl;
           return;
         }
       } catch (mpError) {
@@ -202,7 +207,7 @@ export default function Checkout() {
 
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
-            <OrderSidebar cartItems={cartItems || []} cartSummary={cartSummary} />
+            <OrderSidebar cartItems={cartItems || []} cartSummary={cartSummary} deliveryMethod={deliveryMethod} />
           </div>
         </div>
       </div>

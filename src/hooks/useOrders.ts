@@ -54,6 +54,7 @@ export function useCreateOrder() {
     mutationFn: async ({
       cartItems,
       shippingInfo,
+      deliveryMethod,
       paymentMethod,
       customerNotes,
     }: {
@@ -73,6 +74,7 @@ export function useCreateOrder() {
         postal_code: string;
         dni?: string;
       };
+      deliveryMethod?: "shipping" | "pickup";
       paymentMethod: string;
       customerNotes?: string;
     }) => {
@@ -92,6 +94,7 @@ export function useCreateOrder() {
             quantity: item.quantity,
           })),
           shippingInfo,
+          deliveryMethod: deliveryMethod || "shipping",
           paymentMethod,
           customerNotes: customerNotes || undefined,
         }),

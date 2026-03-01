@@ -84,7 +84,7 @@ export class ApiGatewayStack extends cdk.Stack {
         LOG_LEVEL: "debug",
         MERCADOPAGO_ACCESS_TOKEN: mercadoPagoToken,
         FRONTEND_URL: frontendUrl,
-        API_GATEWAY_URL: "",
+        API_GATEWAY_URL: process.env.API_GATEWAY_URL || "",
       },
       logRetention: logs.RetentionDays.ONE_WEEK,
       description: "Public endpoints for site content and public listings",
