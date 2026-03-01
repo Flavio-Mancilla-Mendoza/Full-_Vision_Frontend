@@ -148,6 +148,9 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
   // Mutation: Actualizar cantidad (con optimistic update)
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ cartItemId, quantity }: { cartItemId: string; quantity: number }) => {
+      // Items with temp IDs only exist in the local optimistic cache — skip the API call
+      if (cartItemId.startsWith("temp-")) return;
+
       if (!requireAuth("actualizar cantidades")) {
         throw new Error("Usuario no autenticado");
       }
@@ -177,6 +180,9 @@ export function useCartMutations({ userId, isAuthenticated, invalidateCart }: Us
   // Mutation: Eliminar del carrito (con optimistic update)
   const removeFromCartMutation = useMutation({
     mutationFn: async (cartItemId: string) => {
+      // Items with temp IDs only exist in the local optimistic cache — skip the API call
+      if (cartItemId.startsWith("temp-")) return;
+
       if (!requireAuth("eliminar productos del carrito")) {
         throw new Error("Usuario no autenticado");
       }

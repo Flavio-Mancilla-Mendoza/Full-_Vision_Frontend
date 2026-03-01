@@ -1,3 +1,6 @@
 // src/types/appointments.ts
-// Re-export from main types file for backwards compatibility
-export type { UserAppointment, CalendarAppointment, ExamResults, AppointmentStatus } from "./index";
+// Re-exports for backwards compatibility — AppointmentStatus lives in database.ts,
+// UserAppointment & CalendarAppointment in index.ts.
+// We re-export them here so consumers can import from "@/types/appointments".
+export type { AppointmentStatus } from "./database";
+export type { UserAppointment, CalendarAppointment, ExamResults } from "./index";

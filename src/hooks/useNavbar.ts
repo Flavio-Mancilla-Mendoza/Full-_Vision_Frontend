@@ -66,19 +66,12 @@ export function useNavbar() {
   const handleProfileClick = useCallback(() => {
     if (loading) return;
 
-    if (isAuthenticated && user) {
+    if (isAuthenticated) {
       navigate("/profile");
-    } else if (isAuthenticated && !user) {
-      toast({
-        title: "Error de sesión",
-        description: "Hay un problema con tu sesión. Por favor, inicia sesión nuevamente.",
-        variant: "destructive",
-      });
-      handleSignOut();
     } else {
       navigate("/login");
     }
-  }, [loading, isAuthenticated, user, navigate, toast, handleSignOut]);
+  }, [loading, isAuthenticated, navigate]);
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
   const openSearch = useCallback(() => setIsSearchOpen(true), []);

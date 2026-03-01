@@ -66,8 +66,8 @@ export interface PrescriptionDetails {
 
 // Status types matching database
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled" | "ready_for_pickup";
-export type AppointmentStatus = "scheduled" | "confirmed" | "in_progress" | "completed" | "cancelled";
 export type UserRole = "admin" | "customer";
+// AppointmentStatus is exported via `export * from "./appointments"`
 
 // Productos con tipos extendidos
 export interface OpticalProduct extends DbProduct {
@@ -148,7 +148,7 @@ export interface UserAppointment extends Omit<DbAppointment, "status"> {
 
 // Para calendario de citas
 export interface CalendarAppointment extends Omit<DbAppointment, "status"> {
-  status: AppointmentStatus;
+  status: import("./database").AppointmentStatus;
   eye_exam_locations: DbLocation | null;
 }
 

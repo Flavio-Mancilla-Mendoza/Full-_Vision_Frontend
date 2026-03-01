@@ -59,6 +59,7 @@ const SiteContentManager = () => {
         <TabsList>
           <TabsTrigger value="hero">Hero Principal</TabsTrigger>
           <TabsTrigger value="banner">Banners</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp Upsell</TabsTrigger>
           <TabsTrigger value="all">Todo el Contenido</TabsTrigger>
         </TabsList>
 
@@ -85,6 +86,30 @@ const SiteContentManager = () => {
             </CardHeader>
           </Card>
           <ContentItemList items={bannerItems} {...listProps} />
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="space-y-4">
+          {(() => {
+            const whatsappItems = getContentBySection("whatsapp_upsell");
+            const enabledItem = whatsappItems.find((i) => i.key === "enabled");
+            const isEnabled = enabledItem?.value === "true";
+            return (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>WhatsApp - Venta de Lunas</CardTitle>
+                    <CardDescription>
+                      Configura el mensaje y CTA de WhatsApp que aparece después de una compra, invitando al cliente a consultar por lunas oftálmicas.
+                      {isEnabled
+                        ? " ✅ Upsell ACTIVO - Se mostrará en confirmación de pedido"
+                        : " ⚠️ Upsell INACTIVO - No se mostrará"}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+                <ContentItemList items={whatsappItems} {...listProps} />
+              </>
+            );
+          })()}
         </TabsContent>
 
         <TabsContent value="all" className="space-y-4">

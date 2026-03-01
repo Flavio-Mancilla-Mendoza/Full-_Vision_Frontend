@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, Package, Home, ShoppingBag, Clock, XCircle } from "lucide-react";
 import SEO from "@/components/common/SEO";
+import WhatsAppLensUpsell from "@/components/orders/WhatsAppLensUpsell";
 import type { Order } from "@/types";
 
 type PaymentQueryStatus = "success" | "pending" | "failure" | null;
@@ -50,6 +51,8 @@ export default function OrderConfirmation() {
       </div>
     );
   }
+
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -205,7 +208,7 @@ export default function OrderConfirmation() {
             <div className="pt-4 border-t">
               <h3 className="font-semibold mb-3">Método de Pago</h3>
               <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
-                <p>{order.admin_notes || "No especificado"}</p>
+                <p>Mercado Pago</p>
                 {order.payment_status && (
                   <p className="mt-2">
                     <strong>Estado del pago:</strong>{" "}
@@ -264,6 +267,14 @@ export default function OrderConfirmation() {
             </div>
           </CardContent>
         </Card>
+
+        {/* WhatsApp Lens Upsell — config comes from backend (site_content) */}
+        <WhatsAppLensUpsell
+          orderNumber={order.order_number}
+          productNames={order.order_items?.map((i) => i.product?.name).filter(Boolean) as string[]}
+          orderCategorySlugs={order.order_items?.map((i) => i.product?.category?.slug)}
+          className="mb-6"
+        />
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4">

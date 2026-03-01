@@ -1,19 +1,20 @@
 // src/components/checkout/OrderConfirmStep.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, ShoppingBag } from "lucide-react";
-import type { ShippingInfo, DeliveryMethod, PaymentMethodType } from "./types";
-import { PAYMENT_METHOD_LABELS, STORE_ADDRESS, STORE_HOURS } from "./types";
+import { CheckCircle2, ShoppingBag, CreditCard } from "lucide-react";
+import type { ShippingInfo, DeliveryMethod } from "./types";
+import { STORE_ADDRESS, STORE_HOURS } from "./types";
 
 interface OrderConfirmStepProps {
   shippingInfo: ShippingInfo;
   deliveryMethod: DeliveryMethod;
-  paymentMethod: PaymentMethodType;
   customerNotes: string;
   isSubmitting: boolean;
   onEditShipping: () => void;
-  onEditPayment: () => void;
+  onCustomerNotesChange: (notes: string) => void;
   onBack: () => void;
   onConfirm: () => void;
 }
@@ -21,11 +22,10 @@ interface OrderConfirmStepProps {
 export function OrderConfirmStep({
   shippingInfo,
   deliveryMethod,
-  paymentMethod,
   customerNotes,
   isSubmitting,
   onEditShipping,
-  onEditPayment,
+  onCustomerNotesChange,
   onBack,
   onConfirm,
 }: OrderConfirmStepProps) {
@@ -85,28 +85,32 @@ export function OrderConfirmStep({
 
         <Separator />
 
-        {/* Payment Method Summary */}
+        {/* Payment Method — Fixed to MercadoPago */}
         <div>
           <h3 className="font-semibold mb-3">Método de Pago</h3>
-          <div className="bg-gray-50 rounded-lg p-4 text-sm">
-            <p>{PAYMENT_METHOD_LABELS[paymentMethod]}</p>
+          <div className="bg-gray-50 rounded-lg p-4 text-sm flex items-center gap-2">
+            <CreditCard className="h-4 w-4 text-blue-600" />
+            <span>Mercado Pago</span>
+            <span className="text-xs text-muted-foreground">(tarjeta, Yape, Plin, transferencia)</span>
           </div>
-          <Button variant="link" onClick={onEditPayment} className="mt-2 p-0 h-auto">
-            Editar
-          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            Serás redirigido a Mercado Pago para completar el pago de forma segura.
+          </p>
         </div>
 
-        {customerNotes && (
-          <>
-            <Separator />
-            <div>
-              <h3 className="font-semibold mb-3">Notas del Pedido</h3>
-              <div className="bg-gray-50 rounded-lg p-4 text-sm">
-                <p>{customerNotes}</p>
-              </div>
-            </div>
-          </>
-        )}
+        <Separator />
+
+        {/* Customer Notes */}
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notas del pedido (opcional)</Label>
+          <Textarea
+            id="notes"
+            placeholder="¿Alguna indicación especial para tu pedido?"
+            value={customerNotes}
+            onChange={(e) => onCustomerNotesChange(e.target.value)}
+            rows={3}
+          />
+        </div>
 
         <Separator />
 
@@ -123,7 +127,7 @@ export function OrderConfirmStep({
             ) : (
               <>
                 <ShoppingBag className="mr-2 h-4 w-4" />
-                Confirmar Pedido
+                Pagar con Mercado Pago
               </>
             )}
           </Button>

@@ -1,10 +1,10 @@
 // src/components/checkout/types.ts - Tipos y constantes del checkout
 
-export type CheckoutStep = "shipping" | "payment" | "confirm";
+export type CheckoutStep = "shipping" | "confirm";
 
 export type DeliveryMethod = "shipping" | "pickup";
 
-export type PaymentMethodType = "mercadopago" | "yape" | "transfer" | "cod" | "store";
+export type PaymentMethodType = "mercadopago";
 
 export interface ShippingInfo {
   name: string;
@@ -24,14 +24,6 @@ export const INITIAL_SHIPPING_INFO: ShippingInfo = {
   address: "",
   city: "",
   postal_code: "",
-};
-
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
-  mercadopago: "Mercado Pago",
-  yape: "Yape / Plin",
-  transfer: "Transferencia Bancaria",
-  cod: "Pago Contra Entrega",
-  store: "Pago en Tienda",
 };
 
 export const STORE_ADDRESS = "Av. Lima 1912 Prd. 10 1/2 Jose Galvez - V.M.T.";

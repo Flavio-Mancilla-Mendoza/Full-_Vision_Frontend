@@ -52,9 +52,9 @@ const uploadFileToStorage = async (file: File, path: string): Promise<string> =>
     throw new Error(`Error uploading file: ${error.message}`);
   }
 
-  const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data.path);
+  const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(data!.Key ?? path);
 
-  return urlData.publicUrl;
+  return urlData?.publicURL ?? "";
 };
 
 // Generar nombre único para archivo

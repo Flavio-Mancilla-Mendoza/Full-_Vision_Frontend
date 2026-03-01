@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Truck, ShoppingBag, Circle } from "lucide-react";
+import { Truck, ShoppingBag, Circle, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ShippingInfo, DeliveryMethod } from "./types";
 import { STORE_ADDRESS, STORE_HOURS } from "./types";
@@ -42,10 +42,10 @@ export function ShippingForm({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Truck className="h-5 w-5" />
-          Información de Envío
+          <Package className="h-5 w-5" />
+          Método de Entrega
         </CardTitle>
-        <CardDescription>¿Dónde quieres recibir tu pedido?</CardDescription>
+        <CardDescription>Elige cómo quieres recibir tu pedido</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import { formatCurrency, getItemPrice } from "@/lib/order-utils";
 import OrderStatusBadge from "./OrderStatusBadge";
+import WhatsAppLensUpsell from "@/components/orders/WhatsAppLensUpsell";
 import type { Order } from "@/types";
 
 interface OrderDetailDialogProps {
@@ -67,6 +68,13 @@ export default function OrderDetailDialog({ order }: OrderDetailDialogProps) {
               </div>
             </div>
           )}
+
+          {/* WhatsApp Lens Upsell — config comes from backend (site_content) */}
+          <WhatsAppLensUpsell
+            orderNumber={order.order_number ?? order.id}
+            productNames={items?.map((i) => i.product?.name).filter(Boolean) as string[]}
+            orderCategorySlugs={items?.map((i) => i.product?.category?.slug)}
+          />
         </div>
       </DialogContent>
     </Dialog>
