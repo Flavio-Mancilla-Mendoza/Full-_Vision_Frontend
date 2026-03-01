@@ -214,7 +214,7 @@ export default function ReturnPolicy() {
                 <strong>WhatsApp:</strong> +51 999 999 999
               </li>
               <li>
-                <strong>Horario:</strong> Lun-Vie 9am-6pm, Sáb 10am-2pm
+                <strong>Horario:</strong> Lun-Sáb 10:00am-7:00pm
               </li>
             </ul>
           </section>

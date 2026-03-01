@@ -14,7 +14,7 @@ const DEFAULT_FORM: LocationFormData = {
   city: "",
   phone: "",
   is_active: true,
-  business_hours: "09:00-18:00",
+  business_hours: "10:00-19:00",
 };
 
 interface UseLocationsOptions {
@@ -82,7 +82,7 @@ export function useLocations(
       city: location.city || "",
       phone: location.phone || "",
       is_active: location.is_active,
-      business_hours: location.business_hours || "09:00-18:00",
+      business_hours: location.business_hours || "10:00-19:00",
     });
     setIsDialogOpen(true);
   }, []);

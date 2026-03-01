@@ -105,7 +105,7 @@ export default function TermsOfService() {
                 <strong>Teléfono:</strong> +51 930639641
               </li>
               <li>
-                <strong>Dirección:</strong> Av. Petit Thouars 1821, Lince, Lima
+                <strong>Dirección:</strong> Av. Lima 1912 Prd. 10 1/2 Jose Galvez - V.M.T.
               </li>
             </ul>
           </section>

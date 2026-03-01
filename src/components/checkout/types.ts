@@ -34,8 +34,8 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethodType, string> = {
   store: "Pago en Tienda",
 };
 
-export const STORE_ADDRESS = "Av. Petit Thouars 1821, Lince 15046 Lima, Perú";
-export const STORE_HOURS = "Lun - Sáb: 9:00 AM - 6:00 PM";
+export const STORE_ADDRESS = "Av. Lima 1912 Prd. 10 1/2 Jose Galvez - V.M.T.";
+export const STORE_HOURS = "Lun - Sáb: 10:00 AM - 7:00 PM";
 
 /**
  * Valida la información de envío/contacto del checkout

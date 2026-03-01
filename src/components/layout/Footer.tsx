@@ -49,7 +49,7 @@ const Footer = () => {
             <div className="space-y-2 text-primary-foreground/80">
               <p>Email: fullvision_optica@outlook.es</p>
               <p>Teléfono: +51 930639641</p>
-              <p>Horario: Lun-Vie 9:00-17:00</p>
+              <p>Horario: Lun-Sáb 10:00-19:00</p>
             </div>
           </div>
         </div>

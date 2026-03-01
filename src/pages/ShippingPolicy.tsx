@@ -47,7 +47,7 @@ export default function ShippingPolicy() {
                   <ul className="list-disc pl-5 space-y-1 text-sm">
                     <li>Disponible en 24-48 horas</li>
                     <li>Sin costo adicional</li>
-                    <li>Horario: Lun-Sáb 10am-5pm</li>
+                    <li>Horario: Lun-Sáb 10:00am-7:00pm</li>
                   </ul>
                 </CardContent>
               </Card>

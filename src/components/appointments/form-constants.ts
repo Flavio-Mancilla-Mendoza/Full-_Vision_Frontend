@@ -4,8 +4,8 @@
 // Time Slots
 // ================================================================
 
-const START_HOUR = 8;
-const END_HOUR = 18; // exclusive — last slot is 17:30
+const START_HOUR = 10;
+const END_HOUR = 19; // exclusive — last slot is 18:30
 
 /**
  * Pre-computed time slots from 08:00 to 17:30 in 30-minute increments

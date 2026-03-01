@@ -3,9 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
-import { S3Image } from "@/components/common/S3Image";
 import { calculateProductPrice, type CartSummary } from "@/hooks/cart";
 import type { CartItemWithProductLocal } from "@/services/cart";
+
+/** Obtiene la URL de imagen del producto con fallback */
+function getProductImageUrl(product: CartItemWithProductLocal["product"]): string | null {
+  if (!product) return null;
+  // Priorizar image_url directo, luego product_images, igual que CartDrawer/CartItem
+  return product.image_url || product.product_images?.[0]?.url || null;
+}
 
 interface OrderSidebarProps {
   cartItems: CartItemWithProductLocal[];
@@ -21,18 +27,20 @@ export function OrderSidebar({ cartItems, cartSummary }: OrderSidebarProps) {
       <CardContent className="space-y-4">
         {/* Cart Items */}
         <div className="space-y-3">
-          {cartItems.map((item) => (
+          {cartItems.map((item) => {
+            const imageUrl = getProductImageUrl(item.product);
+            return (
             <div key={item.id} className="flex gap-3 text-sm">
               <div className="flex-shrink-0 w-16 h-16 bg-gray-100 rounded overflow-hidden">
-                {item.product?.product_images && item.product.product_images.length > 0 ? (
-                  <S3Image
-                    s3Key={item.product.product_images[0].s3_key}
-                    url={item.product.product_images[0].url}
-                    alt={item.product.name}
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt={item.product?.name || "Producto"}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">Sin imagen</div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Sin imagen</div>
                 )}
               </div>
               <div className="flex-1">
@@ -43,7 +51,8 @@ export function OrderSidebar({ cartItems, cartSummary }: OrderSidebarProps) {
                 </p>
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
 
         <Separator />

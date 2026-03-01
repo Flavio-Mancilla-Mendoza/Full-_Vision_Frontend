@@ -41,7 +41,7 @@ export const LocationForm: React.FC<LocationFormProps> = ({ formData, onChange, 
             id="business_hours"
             value={formData.business_hours}
             onChange={(e) => onChange({ ...formData, business_hours: e.target.value })}
-            placeholder="09:00-18:00"
+            placeholder="10:00-19:00"
           />
         </div>
       </div>

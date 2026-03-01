@@ -158,7 +158,7 @@ export function TimeField({ value, error, onChange }: TimeFieldProps) {
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        Horario de atención: 8:00 AM - 6:00 PM
+        Horario de atención: 10:00 AM - 7:00 PM
       </p>
     </div>
   );

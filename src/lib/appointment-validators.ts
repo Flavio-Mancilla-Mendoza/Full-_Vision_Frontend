@@ -48,8 +48,8 @@ export function validateAppointment(formData: AppointmentFormData, now = new Dat
     errors.time = "Selecciona una hora";
   } else {
     const [hours] = formData.time.split(":").map(Number);
-    if (Number.isNaN(hours) || hours < 8 || hours >= 18) {
-      errors.time = "Horario de atención: 8:00 - 18:00";
+    if (Number.isNaN(hours) || hours < 10 || hours >= 19) {
+      errors.time = "Horario de atención: 10:00 - 19:00";
     }
   }
 

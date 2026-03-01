@@ -192,9 +192,9 @@ export default function OrderConfirmation() {
                 ) : (
                   <div className="mt-3 pt-3 border-t">
                     <p className="font-semibold text-primary">📍 Punto de Retiro:</p>
-                    <p className="mt-1">Av. Petit Thouars 1821, Lince 15046</p>
+                    <p className="mt-1">Av. Lima 1912 Prd. 10 1/2 Jose Galvez - V.M.T.</p>
                     <p className="text-muted-foreground">Lima, Perú</p>
-                    <p className="text-xs text-muted-foreground mt-2">Horario: Lun - Sáb: 9:00 AM - 6:00 PM</p>
+                    <p className="text-xs text-muted-foreground mt-2">Horario: Lun - Sáb: 10:00 AM - 7:00 PM</p>
                     <p className="text-xs text-amber-600 mt-2">⚠️ No olvides traer tu DNI para retirar tu pedido</p>
                   </div>
                 )}
