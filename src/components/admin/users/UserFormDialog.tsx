@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import type { CreateUserData, UpdateUserData } from "@full-vision/shared";
+import type { CreateUserData, UpdateUserData } from "@/lib/user-validators";
 import type { UserProfile } from "@/types";
 
 interface UserFormDialogProps {

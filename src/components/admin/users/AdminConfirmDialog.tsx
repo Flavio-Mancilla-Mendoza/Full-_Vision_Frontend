@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { CreateUserData, UpdateUserData } from "@full-vision/shared";
+import type { CreateUserData, UpdateUserData } from "@/lib/user-validators";
 
 interface AdminConfirmDialogProps {
   open: boolean;

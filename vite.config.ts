@@ -46,7 +46,6 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
-        "@full-vision/shared": path.resolve(__dirname, "./shared/src"),
       },
     },
     build: {

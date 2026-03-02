@@ -25,10 +25,8 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@full-vision/shared": ["./shared/src/index.ts"],
-      "@full-vision/shared/*": ["./shared/src/*"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "shared/src"]
+  "include": ["src"]
 }

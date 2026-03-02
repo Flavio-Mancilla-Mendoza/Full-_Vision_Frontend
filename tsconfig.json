@@ -4,9 +4,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@full-vision/shared": ["shared/src/index.ts"],
-      "@full-vision/shared/*": ["shared/src/*"]
+      "@/*": ["./src/*"]
     },
     "strict": true,
     "noImplicitAny": true,

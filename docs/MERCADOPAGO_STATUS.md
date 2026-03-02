@@ -42,8 +42,8 @@ El Access Token es el mismo para pruebas y producción en esta cuenta. Para prob
    - **Contraseña:** `QsBefugz4Q`
    - **Código de verificación:** `839108`
 3. Usar tarjetas de prueba:
-   - Visa (aprobada): `4009 1753 3280 6176` — CVV: `123` — Venc: `11/25`
-   - Mastercard (aprobada): `5031 7557 3453 0604` — CVV: `123` — Venc: `11/25`
+   - Visa (aprobada): `4009 1753 3280 6176` — CVV: `123` — Venc: `11/30`
+   - Mastercard (aprobada): `5031 7557 3453 0604` — CVV: `123` — Venc: `11/30`
 
 ### Después de probar exitosamente
 - Verificar que la orden se actualice con `payment_status: 'approved'` en Supabase

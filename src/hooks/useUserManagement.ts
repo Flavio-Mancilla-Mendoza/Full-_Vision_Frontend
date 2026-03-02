@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createUser, updateUser, deactivateUser } from "@/services/users";
-import type { CreateUserData, UpdateUserData } from "@full-vision/shared";
+import type { CreateUserData, UpdateUserData } from "@/lib/user-validators";
 import type { UserProfile } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useConfirm } from "@/hooks/useConfirm";

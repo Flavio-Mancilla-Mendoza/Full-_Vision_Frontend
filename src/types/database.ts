@@ -820,7 +820,7 @@ export interface Database {
       [_ in never]: never;
     };
     Enums: {
-      /** Enums de PostgreSQL - TODO: Migrar status a enums nativos */
+      /** Enums de PostgreSQL - Validación via CHECK constraints (ver database/add-check-constraints.sql) */
       [_ in never]: never;
     };
     CompositeTypes: {
@@ -836,7 +836,7 @@ export interface Database {
 
 /**
  * Estados de orden disponibles
- * TODO: Migrar a enum de PostgreSQL
+ * Validados en DB via CHECK constraint (database/add-check-constraints.sql)
  */
 export type OrderStatus = 
   | "pending" 
@@ -849,7 +849,7 @@ export type OrderStatus =
 
 /**
  * Estados de cita disponibles
- * TODO: Migrar a enum de PostgreSQL
+ * Validados en DB via CHECK constraint (database/add-check-constraints.sql)
  */
 export type AppointmentStatus = 
   | "scheduled" 
@@ -860,7 +860,7 @@ export type AppointmentStatus =
 
 /**
  * Roles de usuario disponibles
- * TODO: Migrar a enum de PostgreSQL
+ * Validados en DB via CHECK constraint (database/add-check-constraints.sql)
  */
 export type UserRole = "admin" | "customer";
 
