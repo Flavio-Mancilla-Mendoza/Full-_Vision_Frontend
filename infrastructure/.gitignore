@@ -2,13 +2,15 @@
 # CDK & Node.js
 # ================================================================
 node_modules/
-*.js
 *.d.ts
 *.map
 
-# But keep Lambda handler files
-!lambda/*/index.js
-!lambda/**/index.js
+# CDK compiled JS (TypeScript → JS in bin/ and lib/)
+bin/*.js
+lib/*.js
+
+# But keep ALL Lambda source files (.js is the source for Lambdas)
+# node_modules inside Lambdas are handled by the global node_modules/ rule above
 
 # CDK output
 cdk.out/
@@ -78,9 +80,7 @@ build/
 coverage/
 *.lcov
 
-# Compiled JS from TypeScript (but keep lib/*.ts source files)
-lib/*.js
-lib/*.d.ts
+# Compiled JS from TypeScript CDK code (already handled above)
 lib/*.js.map
 yarn.lock
 package-lock.json
@@ -117,6 +117,6 @@ terraform.rc
 # Temporary / Downloaded from AWS
 # ================================================================
 current-stack-template.json
-lambda/supabase-products/
-lambda/supabase-public/
-lambda/supabase-uploads/
+
+# Lambda build artifacts (zips)
+*.zip
