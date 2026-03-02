@@ -89,6 +89,25 @@ export async function getAllOrders(): Promise<Order[]> {
   return data;
 }
 
+export interface OrderStatusCounts {
+  all: number;
+  pending: number;
+  confirmed: number;
+  processing: number;
+  ready_for_pickup: number;
+  shipped: number;
+  delivered: number;
+  cancelled: number;
+}
+
+/**
+ * Obtener conteo de órdenes por estado (vía API Gateway)
+ * Usa endpoint dedicado para eficiencia — no descarga todas las órdenes.
+ */
+export async function getOrderStatusCounts(): Promise<OrderStatusCounts> {
+  return ordersApi.getCounts() as Promise<OrderStatusCounts>;
+}
+
 /**
  * Obtener órdenes de un usuario (vía API Gateway)
  */

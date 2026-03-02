@@ -73,21 +73,27 @@ export default function Checkout() {
 
     setOrderError(null);
     try {
-      const order = await createOrderMutation.mutateAsync({
-        userId: user.id,
-        cartItems,
-        shippingInfo,
-        deliveryMethod,
-        paymentMethod: "mercadopago",
-        customerNotes: customerNotes || undefined,
-      });
+      // If returning from a failed MP payment, reuse the existing order instead of creating a duplicate
+      let orderId = mpFailureOrderId;
+
+      if (!orderId) {
+        const order = await createOrderMutation.mutateAsync({
+          userId: user.id,
+          cartItems,
+          shippingInfo,
+          deliveryMethod,
+          paymentMethod: "mercadopago",
+          customerNotes: customerNotes || undefined,
+        });
+        orderId = order.id;
+      }
 
       // Redirigir a Mercado Pago para completar el pago
       try {
         const { createMercadoPagoPreference } = await import("../services/mercadopago");
 
         const preference = await createMercadoPagoPreference({
-          orderId: order.id,
+          orderId: orderId,
           payer: {
             email: shippingInfo.email || user.email || "sin-email@example.com",
             name: shippingInfo.name || user.full_name || "Cliente",
@@ -107,7 +113,7 @@ export default function Checkout() {
         console.error("Error creating MercadoPago preference:", mpError);
       }
       // MP preference failed — navigate to confirmation with failure flag
-      navigate(`/order-confirmation/${order.id}?payment=failure`);
+      navigate(`/order-confirmation/${orderId}?payment=failure`);
     } catch (error) {
       console.error("Error creating order:", error);
       setOrderError(
@@ -146,16 +152,8 @@ export default function Checkout() {
           <Alert className="mb-6 bg-red-50 border-red-200">
             <XCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-900">
-              <strong>El pago no se completó.</strong> Tu pedido ya fue creado.
-              Puedes ver los detalles en{" "}
-              <Button
-                variant="link"
-                className="px-0 h-auto text-red-900 underline"
-                onClick={() => navigate(`/order-confirmation/${mpFailureOrderId}`)}
-              >
-                tu confirmación de pedido
-              </Button>{" "}
-              o intentarlo nuevamente.
+              <strong>El pago no se completó.</strong> Tu carrito sigue intacto.
+              Puedes intentar el pago nuevamente haciendo clic en &quot;Confirmar y Pagar&quot;.
             </AlertDescription>
           </Alert>
         )}

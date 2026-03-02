@@ -1,6 +1,6 @@
 // src/components/admin/OrderManagement.tsx - Gestión de órdenes para admin
 import { useState } from "react";
-import { useUpdateOrderStatus } from "@/hooks/useOrders";
+import { useUpdateOrderStatus, useOrderStatusCounts } from "@/hooks/useOrders";
 import { usePagination } from "@/hooks/usePagination";
 import { getAllOrdersPaginated } from "@/services/admin";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -62,6 +62,19 @@ export function OrderManagement() {
   });
 
   const updateStatusMutation = useUpdateOrderStatus();
+  const { data: statusCounts } = useOrderStatusCounts();
+
+  // Default counts while loading
+  const counts = statusCounts ?? {
+    all: totalCount,
+    pending: 0,
+    confirmed: 0,
+    processing: 0,
+    ready_for_pickup: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  };
 
   // Función para aplicar filtros
   const applyFilters = () => {
@@ -92,21 +105,21 @@ export function OrderManagement() {
     setPage(1);
   };
 
+  // Filtro rápido desde StatsCards
+  const quickFilter = (status: string) => {
+    setStatusFilter(status);
+    setTempStatusFilter(status);
+    setFilters({
+      status: status !== "all" ? status : undefined,
+      search: searchTerm || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
+    });
+    setPage(1);
+  };
+
   // No necesitamos filtrado local ya que viene del backend
   const filteredOrders = orders;
-
-  // Para contar por estado, necesitamos una consulta separada o estimación
-  // Por ahora usamos los datos actuales
-  const statusCounts = {
-    all: totalCount,
-    pending: orders.filter((o) => o.status === "pending").length,
-    confirmed: orders.filter((o) => o.status === "confirmed").length,
-    processing: orders.filter((o) => o.status === "processing").length,
-    ready_for_pickup: orders.filter((o) => o.status === "ready_for_pickup").length,
-    shipped: orders.filter((o) => o.status === "shipped").length,
-    delivered: orders.filter((o) => o.status === "delivered").length,
-    cancelled: orders.filter((o) => o.status === "cancelled").length,
-  };
 
   const handleUpdateStatus = async (orderId: string) => {
     if (!newStatus) return;
@@ -160,14 +173,15 @@ export function OrderManagement() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        <StatsCard title="Todos" value={statusCounts.all} />
-        <StatsCard title="Pendientes" value={statusCounts.pending} variant="warning" />
-        <StatsCard title="Confirmados" value={statusCounts.confirmed} variant="info" />
-        <StatsCard title="Procesando" value={statusCounts.processing} variant="info" />
-        <StatsCard title="Listo Recojo" value={statusCounts.ready_for_pickup} variant="success" />
-        <StatsCard title="Enviados" value={statusCounts.shipped} variant="success" />
-        <StatsCard title="Entregados" value={statusCounts.delivered} variant="success" />
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <StatsCard title="Todos" value={counts.all} onClick={() => quickFilter("all")} isActive={statusFilter === "all"} />
+        <StatsCard title="Pendientes" value={counts.pending} variant="warning" onClick={() => quickFilter("pending")} isActive={statusFilter === "pending"} />
+        <StatsCard title="Confirmados" value={counts.confirmed} variant="info" onClick={() => quickFilter("confirmed")} isActive={statusFilter === "confirmed"} />
+        <StatsCard title="Procesando" value={counts.processing} variant="info" onClick={() => quickFilter("processing")} isActive={statusFilter === "processing"} />
+        <StatsCard title="Listo Recojo" value={counts.ready_for_pickup} variant="success" onClick={() => quickFilter("ready_for_pickup")} isActive={statusFilter === "ready_for_pickup"} />
+        <StatsCard title="Enviados" value={counts.shipped} variant="success" onClick={() => quickFilter("shipped")} isActive={statusFilter === "shipped"} />
+        <StatsCard title="Entregados" value={counts.delivered} variant="success" onClick={() => quickFilter("delivered")} isActive={statusFilter === "delivered"} />
+        <StatsCard title="Cancelados" value={counts.cancelled} variant="destructive" onClick={() => quickFilter("cancelled")} isActive={statusFilter === "cancelled"} />
       </div>
 
       {/* Filters */}

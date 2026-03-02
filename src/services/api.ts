@@ -286,6 +286,13 @@ export const ordersApi = {
   },
 
   /**
+   * Obtener conteo de órdenes agrupado por estado
+   */
+  getCounts: async (): Promise<Record<string, number>> => {
+    return apiRequest<Record<string, number>>("/orders/counts");
+  },
+
+  /**
    * Obtener una orden por ID
    */
   get: async (id: string): Promise<Order> => {

@@ -3,10 +3,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/auth";
 import { getOrders, getOrder, type Order } from "@/services/orders";
-import { updateOrderStatus, getAllOrdersPaginated } from "@/services/admin";
+import { updateOrderStatus, getAllOrdersPaginated, getOrderStatusCounts } from "@/services/admin";
+import type { OrderStatusCounts } from "@/services/admin/orders";
 import { getApiUrl } from "@/services/api";
 import { fetchAuthSession } from "@aws-amplify/auth";
 import type { OrderStatus } from "@/types";
+
+// Hook para obtener conteos de órdenes por estado (Admin)
+export function useOrderStatusCounts() {
+  return useQuery<OrderStatusCounts>({
+    queryKey: ["orders", "statusCounts"],
+    queryFn: getOrderStatusCounts,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+    gcTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
+  });
+}
 
 // Hook para obtener órdenes paginadas (Admin)
 export function useOrdersPaginated(

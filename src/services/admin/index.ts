@@ -39,6 +39,8 @@ export {
   updateOrderStatus,
   generateOrderNumber,
   createOrderFromCart,
+  getOrderStatusCounts,
+  type OrderStatusCounts,
 } from "./orders";
 
 // Locations
